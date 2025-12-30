@@ -36,10 +36,12 @@ This skill includes helper scripts in the `bin/` subdirectory:
 
 ### 1. Locate skill directory
 
-Find where this skill is installed:
+Run this to find where the skill is installed:
 ```bash
-SKILL_DIR=$(find ~/.claude/plugins/cache -type d -name "fit-skills-context" 2>/dev/null | head -1)
+find ~/.claude/plugins/cache -type d -name "fit-skills-context" | tail -1
 ```
+
+Note the output path (e.g., `/Users/.../.claude/plugins/cache/fit-skills/gsd/1.0.5/skills/fit-skills-context`).
 
 ### 2. Check your context window
 
@@ -52,14 +54,15 @@ Context window: 86 skills total, 77 shown (9 hidden due to token limits)
 
 ### 3. Run budget summary
 
+Using the path from step 1, run the summary script:
 ```bash
-"$SKILL_DIR/bin/summary"
+{path-from-step-1}/bin/summary
 ```
 
 ### 4. Run plugin breakdown
 
 ```bash
-"$SKILL_DIR/bin/plugin-breakdown"
+{path-from-step-1}/bin/plugin-breakdown
 ```
 
 ### 5. Summarize findings
