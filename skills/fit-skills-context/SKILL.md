@@ -10,6 +10,12 @@ Check how much of the 15,000 character skill description budget is being used.
 
 Skill names and descriptions are loaded into the system prompt at startup. The default limit is ~15,000 characters. Skills over the limit are silently dropped.
 
+**References:**
+- [Skill authoring best practices](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices) - individual limits (1024 chars per description)
+- [Claude Code skills not triggering?](https://blog.fsck.com/2025/12/17/claude-code-skills-not-triggering/) - explains the 15k default budget
+
+**Increase budget:** `SLASH_COMMAND_TOOL_CHAR_BUDGET=30000 claude`
+
 ## Individual Skill Limits
 
 Per [Skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices):
@@ -36,12 +42,7 @@ This skill includes helper scripts in the `bin/` subdirectory:
 
 ### 1. Locate skill directory
 
-Run this to find where the skill is installed:
-```bash
-find ~/.claude/plugins/cache -type d -name "fit-skills-context" | tail -1
-```
-
-Note the output path (e.g., `/Users/.../.claude/plugins/cache/fit-skills/gsd/1.0.5/skills/fit-skills-context`).
+Use the path where you found this SKILL.md file. The scripts are in the `bin/` subdirectory relative to this file.
 
 ### 2. Check your context window
 
