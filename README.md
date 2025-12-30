@@ -6,7 +6,12 @@ Did your Claude stuff its context window with too many bloated skills?
 
 <img src="./logo.png" alt="fit-skills logo" width="200">
 
-Use this diagnostic tool to find which skills, both `User` (global), `plugins` and `project` specific are being loaded into the context-window to determine how much headroom you have.
+Use this diagnostic tool to analyse skills across:
+- `User` (global)
+- `plugin`
+- `project`
+
+Which skills are being loaded into the context-window - and determine how much headroom you have.
 
 Find misbehaving plugins.
 
