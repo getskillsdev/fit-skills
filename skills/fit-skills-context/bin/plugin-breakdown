@@ -6,13 +6,25 @@ set -e
 
 # Find this skill's directory
 skill_dir="$(cd "$(dirname "$0")/.." && pwd)"
-measure="$skill_dir/bin/measure-descriptions"
+scan_skills="$skill_dir/bin/scan-skills"
+scan_commands="$skill_dir/bin/scan-commands"
 plugins_cache="$HOME/.claude/plugins/cache"
 
 if [ ! -d "$plugins_cache" ]; then
   echo "No plugins installed."
   exit 0
 fi
+
+# Count chars from description: lines in listed files only
+count_descriptions() {
+  local chars=0
+  while IFS='|' read -r path type name; do
+    [ -z "$path" ] && continue
+    line_chars=$(grep "^description:" "$path" 2>/dev/null | head -1 | wc -c | tr -d ' ')
+    chars=$((chars + line_chars))
+  done
+  echo "$chars"
+}
 
 echo "Plugin Description Usage"
 echo "========================"
@@ -41,7 +53,13 @@ for marketplace in "$plugins_cache"/*/; do
     # Skip if all versions are orphaned (uninstalled)
     [ -n "$latest" ] || continue
 
-    chars=$("$measure" "$plugin/$latest")
+    version_dir="$plugin/$latest"
+
+    # Count only real skills and commands (not themes, examples, etc.)
+    skills_chars=$("$scan_skills" "${version_dir}/skills" 2>/dev/null | count_descriptions)
+    cmds_chars=$("$scan_commands" "${version_dir}/commands" 2>/dev/null | count_descriptions)
+    chars=$((skills_chars + cmds_chars))
+
     if [ "$chars" -gt 0 ]; then
       total=$((total + chars))
       printf "%-50s %8d\n" "$plugin_name@$marketplace_name" "$chars"
