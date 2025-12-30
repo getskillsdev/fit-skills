@@ -20,7 +20,15 @@ Find misbehaving plugins.
 
 ## Requirements
 
-- `jq` - JSON processor ([install](https://jqlang.github.io/jq/download/))
+- `jq` - JSON processor
+
+```bash
+# macOS
+brew install jq
+
+# Linux
+sudo apt-get install -y jq
+```
 
 ## Install
 
