@@ -1,6 +1,6 @@
 ---
 description: Audit skill description budget
-skill: ./skills/fit-skills-context/SKILL.md
+skill: skills/fit-skills-context/SKILL.md
 ---
 
 # /gsd:fit-skills
