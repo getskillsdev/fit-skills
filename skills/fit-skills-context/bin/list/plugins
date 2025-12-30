@@ -13,11 +13,13 @@ for marketplace in "$HOME/.claude/plugins/cache"/*/; do
   [ -d "$marketplace" ] || continue
   for plugin in "$marketplace"/*/; do
     [ -d "$plugin" ] || continue
-    for version in "$plugin"/*/; do
-      [ -d "$version" ] || continue
 
-      "$bin_dir/scan-skills" "${version}skills"
-      "$bin_dir/scan-commands" "${version}commands"
-    done
+    # Get latest version (sort by semver, take last)
+    latest=$(ls -1 "$plugin" | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+    [ -n "$latest" ] || continue
+    version="${plugin}${latest}/"
+
+    "$bin_dir/scan-skills" "${version}skills"
+    "$bin_dir/scan-commands" "${version}commands"
   done
 done
