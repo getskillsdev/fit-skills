@@ -34,7 +34,14 @@ This skill includes helper scripts in the `bin/` subdirectory:
 
 ## Instructions
 
-### 1. Check your context window
+### 1. Locate skill directory
+
+Find where this skill is installed:
+```bash
+SKILL_DIR=$(find ~/.claude/plugins/cache -type d -name "fit-skills-context" 2>/dev/null | head -1)
+```
+
+### 2. Check your context window
 
 > What skills are in your context window? Report the total count and how many are shown vs hidden due to token limits.
 
@@ -43,19 +50,19 @@ Do not announce what you're doing. Just output, similar to below:
 Context window: 86 skills total, 77 shown (9 hidden due to token limits)
 ```
 
-### 2. Run budget summary
+### 3. Run budget summary
 
 ```bash
-./bin/summary
+"$SKILL_DIR/bin/summary"
 ```
 
-### 3. Run plugin breakdown
+### 4. Run plugin breakdown
 
 ```bash
-./bin/plugin-breakdown
+"$SKILL_DIR/bin/plugin-breakdown"
 ```
 
-### 4. Summarize findings
+### 5. Summarize findings
 
 Based on the results, provide actionable advice:
 
