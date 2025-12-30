@@ -35,27 +35,27 @@ brew install jq
 sudo apt-get install -y jq
 ```
 
-## Install
+## Install (quit Claude first)
 
 ```bash
 claude plugin marketplace add getskillsdev/fit-skills
 claude plugin install gsd@fit-skills
 ```
 
-## Usage
+## Usage (in Claude)
 
 ```
 /gsd:fit-skills
 ```
 
-## Update
+## Update (quit Claude first)
 
 ```bash
 claude plugin marketplace update fit-skills
 claude plugin update gsd@fit-skills
 ```
 
-## Uninstall
+## Uninstall (quit Claude first)
 
 ```bash
 claude plugin uninstall gsd@fit-skills
