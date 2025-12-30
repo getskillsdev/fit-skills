@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# List all skills and commands from installed plugins
+# Output: path|type|name (one per line)
+
+set -e
+
+# Structure: ~/.claude/plugins/cache/marketplace/plugin/version/...
+[ -d "$HOME/.claude/plugins/cache" ] || exit 0
+
+bin_dir="$(cd "$(dirname "$0")/.." && pwd)"
+
+for marketplace in "$HOME/.claude/plugins/cache"/*/; do
+  [ -d "$marketplace" ] || continue
+  for plugin in "$marketplace"/*/; do
+    [ -d "$plugin" ] || continue
+    for version in "$plugin"/*/; do
+      [ -d "$version" ] || continue
+
+      "$bin_dir/scan-skills" "${version}skills"
+      "$bin_dir/scan-commands" "${version}commands"
+    done
+  done
+done

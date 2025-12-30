@@ -1,0 +1,16 @@
+{
+  "name": "fit-skills",
+  "owner": {
+    "name": "getskillsdev",
+    "url": "https://github.com/getskillsdev"
+  },
+  "metadata": {
+    "description": "Audits skill description budget usage across global skills, plugins, and projects. Use when user asks about skill token limits or why skills are hidden.",
+    "version": "1.0.0"
+  },
+  "plugins": [{
+    "name": "gsd",
+    "source": "./",
+    "description": "Audits skill description budget usage across global skills, plugins, and projects. Use when user asks about skill token limits or why skills are hidden."
+  }]
+}

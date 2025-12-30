@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# Show budget summary across all sources
+# Usage: summary
+#
+# Runs audit-source for global, plugins, and project, then displays totals.
+
+set -e
+
+LIMIT=15000
+
+# Find this skill's directory
+skill_dir="$(cd "$(dirname "$0")/.." && pwd)"
+audit="$skill_dir/bin/audit-source"
+
+# Generate audits (store in memory via jq)
+global=$("$audit" global 2>/dev/null)
+plugins=$("$audit" plugins 2>/dev/null)
+project=$("$audit" project 2>/dev/null)
+
+# Extract values
+g_skills=$(echo "$global" | jq -r '.skills_chars // 0')
+g_cmds=$(echo "$global" | jq -r '.commands_chars // 0')
+g_total=$(echo "$global" | jq -r '.total_chars // 0')
+g_skill_count=$(echo "$global" | jq -r '.skills | length')
+g_cmd_count=$(echo "$global" | jq -r '.commands | length')
+
+p_skills=$(echo "$plugins" | jq -r '.skills_chars // 0')
+p_cmds=$(echo "$plugins" | jq -r '.commands_chars // 0')
+p_total=$(echo "$plugins" | jq -r '.total_chars // 0')
+p_skill_count=$(echo "$plugins" | jq -r '.skills | length')
+p_cmd_count=$(echo "$plugins" | jq -r '.commands | length')
+
+proj_skills=$(echo "$project" | jq -r '.skills_chars // 0')
+proj_cmds=$(echo "$project" | jq -r '.commands_chars // 0')
+proj_total=$(echo "$project" | jq -r '.total_chars // 0')
+proj_skill_count=$(echo "$project" | jq -r '.skills | length')
+proj_cmd_count=$(echo "$project" | jq -r '.commands | length')
+
+echo "=== SKILL BUDGET SUMMARY ==="
+echo ""
+echo "Source              Skills    Commands    Total"
+echo "------              ------    --------    -----"
+
+printf "%-18s %8d %11d %8d  (%d skills, %d commands)\n" "Global" "$g_skills" "$g_cmds" "$g_total" "$g_skill_count" "$g_cmd_count"
+printf "%-18s %8d %11d %8d  (%d skills, %d commands)\n" "Plugins" "$p_skills" "$p_cmds" "$p_total" "$p_skill_count" "$p_cmd_count"
+printf "%-18s %8d %11d %8d  (%d skills, %d commands)\n" "Project" "$proj_skills" "$proj_cmds" "$proj_total" "$proj_skill_count" "$proj_cmd_count"
+
+echo "------              ------    --------    -----"
+total_skills=$((g_skills + p_skills + proj_skills))
+total_cmds=$((g_cmds + p_cmds + proj_cmds))
+grand_total=$((g_total + p_total + proj_total))
+total_skill_count=$((g_skill_count + p_skill_count + proj_skill_count))
+total_cmd_count=$((g_cmd_count + p_cmd_count + proj_cmd_count))
+
+printf "%-18s %8d %11d %8d  (%d skills, %d commands)\n" "TOTAL" "$total_skills" "$total_cmds" "$grand_total" "$total_skill_count" "$total_cmd_count"
+echo ""
+echo "Budget:    $LIMIT"
+echo "Remaining: $((LIMIT - grand_total))"
+pct=$(awk "BEGIN { printf \"%.1f\", ($grand_total / $LIMIT) * 100 }")
+echo "Usage:     ${pct}%"

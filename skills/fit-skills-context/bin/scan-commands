@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Scan a directory for command .md files
+# Usage: scan-commands <dir>
+# Output: path|command|name (one per line)
+
+set -e
+
+dir="${1:?Usage: scan-commands <dir>}"
+[ -d "$dir" ] || exit 0
+
+while IFS= read -r f; do
+  rel_path="${f#$dir/}"
+  name="${rel_path%.md}"
+  name="${name//\//:}"
+  echo "$f|command|$name"
+done < <(find -L "$dir" -name "*.md" -type f 2>/dev/null)

@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Audit skill/command descriptions for a source and output JSON
+# Usage: audit-source <source> [output_file]
+#   source: global | plugins | project
+#
+# Output: JSON object with skills array
+
+set -e
+
+source="${1:?Usage: audit-source <global|plugins|project> [output_file]}"
+output_file="${2:-}"
+
+# Find this skill's directory
+skill_dir="$(cd "$(dirname "$0")/.." && pwd)"
+list_skills="$skill_dir/bin/list-skills"
+
+# Extract description from frontmatter
+get_description() {
+  local file="$1"
+  grep "^description:" "$file" 2>/dev/null | head -1 | sed 's/^description: //'
+}
+
+# Build separate arrays for skills and commands
+skills_json='['
+commands_json='['
+skills_first=true
+commands_first=true
+skills_chars=0
+commands_chars=0
+
+while IFS='|' read -r path type name; do
+  [ -z "$path" ] && continue
+
+  desc=$(get_description "$path")
+  desc_chars=${#desc}
+
+  # Count full description line (including "description: " prefix and newline)
+  line_chars=$(grep "^description:" "$path" 2>/dev/null | head -1 | wc -c | tr -d ' ')
+
+  # Escape quotes in description for JSON
+  desc_escaped=$(echo "$desc" | sed 's/"/\\"/g')
+
+  item='{"name":"'"$name"'","desc":"'"$desc_escaped"'","chars":'"$line_chars"'}'
+
+  if [ "$type" = "skill" ]; then
+    skills_chars=$((skills_chars + line_chars))
+    if [ "$skills_first" = true ]; then
+      skills_first=false
+    else
+      skills_json+=','
+    fi
+    skills_json+="$item"
+  else
+    commands_chars=$((commands_chars + line_chars))
+    if [ "$commands_first" = true ]; then
+      commands_first=false
+    else
+      commands_json+=','
+    fi
+    commands_json+="$item"
+  fi
+
+done < <("$list_skills" "$source")
+
+skills_json+=']'
+commands_json+=']'
+total_chars=$((skills_chars + commands_chars))
+
+json='{"source":"'"$source"'","audit_date":"'"$(date +%Y-%m-%d)"'","skills":'"$skills_json"',"skills_chars":'"$skills_chars"',"commands":'"$commands_json"',"commands_chars":'"$commands_chars"',"total_chars":'"$total_chars"'}'
+
+if [ -n "$output_file" ]; then
+  echo "$json" | jq '.' > "$output_file"
+  echo "Wrote $output_file (total: $total_chars chars)"
+else
+  echo "$json" | jq '.'
+fi

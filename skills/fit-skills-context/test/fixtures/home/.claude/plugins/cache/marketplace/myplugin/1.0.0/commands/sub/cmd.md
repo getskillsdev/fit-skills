@@ -1,0 +1,3 @@
+---
+description: Nested plugin command
+---

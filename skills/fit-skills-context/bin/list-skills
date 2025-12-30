@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# List all skills and commands for a source
+# Usage: list-skills <source>
+#   source: global | plugins | project
+#
+# Output: path|type|name (one per line)
+#   type: skill | command
+
+set -e
+
+source="${1:?Usage: list-skills <global|plugins|project>}"
+bin_dir="$(cd "$(dirname "$0")" && pwd)"
+
+case "$source" in
+  global|plugins|project)
+    exec "$bin_dir/list/$source"
+    ;;
+  *)
+    echo "Unknown source: $source" >&2
+    echo "Usage: list-skills <global|plugins|project>" >&2
+    exit 1
+    ;;
+esac
