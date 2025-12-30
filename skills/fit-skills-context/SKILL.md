@@ -1,6 +1,6 @@
 ---
 name: fit-skills-context
-description: Find misbehaving plugins across global-skills, plugins, and the current-project. Use when user asks about skill token limits or why skills are hidden.
+description: Find bloated plugins.
 allowed-tools: Read, Bash
 ---
 

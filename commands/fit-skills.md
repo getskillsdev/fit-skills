@@ -1,6 +1,6 @@
 ---
-description: Audit skill description budget and find what's consuming tokens
-skill: ./skills/fit-skills-context
+description: Audit skill description budget
+skill: ./skills/fit-skills-context/SKILL.md
 ---
 
 # /gsd:fit-skills
