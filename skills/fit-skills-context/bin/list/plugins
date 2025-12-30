@@ -14,8 +14,13 @@ for marketplace in "$HOME/.claude/plugins/cache"/*/; do
   for plugin in "$marketplace"/*/; do
     [ -d "$plugin" ] || continue
 
-    # Get latest version (sort by semver, take last)
-    latest=$(ls -1 "$plugin" | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+    # Find latest non-orphaned version
+    latest=""
+    for v in $(ls -1 "$plugin" | sort -t. -k1,1n -k2,2n -k3,3n); do
+      [ -f "$plugin/$v/.orphaned_at" ] || latest="$v"
+    done
+
+    # Skip if all versions are orphaned (uninstalled)
     [ -n "$latest" ] || continue
     version="${plugin}${latest}/"
 

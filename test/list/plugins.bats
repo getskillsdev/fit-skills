@@ -34,14 +34,22 @@ teardown() {
   [[ "$output" == *"|command|sub:cmd"* ]]
 }
 
-@test "list/plugins: only processes latest version" {
+@test "list/plugins: only processes latest non-orphaned version" {
   export HOME="$fixtures_dir/home-multiversion"
   run "$bin_dir/list/plugins"
   [ "$status" -eq 0 ]
-  # Should find latest version (1.0.1)
+  # Should find latest non-orphaned version (1.0.1)
   [[ "$output" == *"|skill|current-skill"* ]]
   [[ "$output" == *"|command|current-cmd"* ]]
-  # Should NOT find old version (1.0.0)
+  # Should NOT find orphaned version (1.0.0)
   [[ "$output" != *"old-skill"* ]]
   [[ "$output" != *"old-cmd"* ]]
+}
+
+@test "list/plugins: skips fully orphaned plugins (uninstalled)" {
+  export HOME="$fixtures_dir/home-multiversion"
+  run "$bin_dir/list/plugins"
+  [ "$status" -eq 0 ]
+  # Should NOT find skills from fully orphaned plugin
+  [[ "$output" != *"gone-skill"* ]]
 }

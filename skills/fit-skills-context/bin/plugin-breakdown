@@ -32,7 +32,16 @@ for marketplace in "$plugins_cache"/*/; do
     [ -d "$plugin" ] || continue
     plugin_name=$(basename "$plugin")
 
-    chars=$("$measure" "$plugin")
+    # Find latest non-orphaned version
+    latest=""
+    for v in $(ls -1 "$plugin" | sort -t. -k1,1n -k2,2n -k3,3n); do
+      [ -f "$plugin/$v/.orphaned_at" ] || latest="$v"
+    done
+
+    # Skip if all versions are orphaned (uninstalled)
+    [ -n "$latest" ] || continue
+
+    chars=$("$measure" "$plugin/$latest")
     if [ "$chars" -gt 0 ]; then
       total=$((total + chars))
       printf "%-50s %8d\n" "$plugin_name@$marketplace_name" "$chars"
