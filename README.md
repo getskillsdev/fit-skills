@@ -62,6 +62,12 @@ claude plugin uninstall gsd@fit-skills
 claude plugin marketplace remove fit-skills
 ```
 
+## Troubleshooting
+
+**Command not showing in completion?**
+
+Restart Claude after installing or updating plugins.
+
 ## License
 
 MIT - see [LICENSE.md](./LICENSE.md)
