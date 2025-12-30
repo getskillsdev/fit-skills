@@ -59,11 +59,15 @@ Using the path from step 1, run the summary script:
 {path-from-step-1}/bin/summary
 ```
 
+**Print the full output in your response** (don't just summarize).
+
 ### 4. Run plugin breakdown
 
 ```bash
 {path-from-step-1}/bin/plugin-breakdown
 ```
+
+**Print the full output in your response** (don't just summarize).
 
 ### 5. Summarize findings
 

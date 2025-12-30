@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 setup() {
-  bin_dir="$(cd "$(dirname "$BATS_TEST_FILENAME")/../../bin" && pwd)"
+  bin_dir="$(cd "$(dirname "$BATS_TEST_FILENAME")/../../skills/fit-skills-context/bin" && pwd)"
   fixtures_dir="$(cd "$(dirname "$BATS_TEST_FILENAME")/../fixtures" && pwd)"
   ORIG_HOME="$HOME"
   export HOME="$fixtures_dir/home"

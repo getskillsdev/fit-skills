@@ -16,4 +16,4 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y bats
       - name: Run tests
-        run: bats $(find skills -name '*.bats' -type f)
+        run: bats $(find test -name '*.bats' -type f)
