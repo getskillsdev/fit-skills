@@ -35,7 +35,8 @@ teardown() {
 @test "top-desc-limit-consumers: shows items from project" {
   export HOME="$fixtures_dir/home"
   export PROJECT_DIR="$fixtures_dir/project"
-  run "$bin_dir/top-desc-limit-consumers"
+  # Use high limit to include smaller project items
+  run "$bin_dir/top-desc-limit-consumers" 100
   [ "$status" -eq 0 ]
   [[ "$output" == *"project"* ]]
 }
