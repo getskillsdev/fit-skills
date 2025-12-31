@@ -159,8 +159,12 @@ Based on the results, provide actionable advice.
 
 **If skills are hidden but description budget has headroom:**
 - The issue is token limits, not description chars
+- **IMPORTANT:** `SLASH_COMMAND_TOOL_CHAR_BUDGET` does NOT help here - it only affects description budget
+- There is no env var to increase token limits - the only fix is to remove items
 - Step 4's `all/compare` output shows what was dropped
 - If a plugin skill is >3k tokens, suggest trimming or uninstalling
 - If an MCP server adds >10k tokens, note the cost
 - Identify quick wins (large items that could be removed)
 - Project skills load last and get dropped first
+
+Example phrasing: "To restore the dropped project skills, uninstall large plugins or MCP servers to free token budget."
