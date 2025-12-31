@@ -56,94 +56,17 @@ This skill includes helper scripts in the `bin/` subdirectory:
 
 Use the path where you found this SKILL.md file. The scripts are in the `bin/` subdirectory relative to this file.
 
-### 2. Check your context window
+### 2. Request /context output
 
-> What skills are in your context window? Report the total count and how many are shown vs hidden due to token limits.
+Ask the user:
 
-Do not announce what you're doing. Just output, similar to below:
-```
-Context window: 86 skills total, 77 shown (9 hidden due to token limits)
-```
+**Please run `/context` and paste the output here. This shows token usage for all loaded skills and MCP tools.**
 
-### 3. Identify dropped items
+Wait for the user to provide the output before proceeding to step 3.
 
-**Note:** Hidden items can include both project skills AND MCP tools. Don't assume all hidden items are project skills.
+### 3. Analyze /context output
 
-If skills are hidden (step 2):
-
-**3a. Check project skills/commands:**
-
-1. Run the list-project-items script:
-```bash
-{path-from-step-1}/bin/list-project-items
-```
-
-2. Compare output to what's in your `<available_skills>` context under "Project"
-3. Report ONLY items that exist on disk but aren't in context (don't pad to match hidden count)
-
-**3b. Check MCP tools:**
-
-1. Check `.mcp.json` in project root for configured MCP servers
-2. Compare to MCP tools in your context
-3. If a server is configured but has no tools in context, it was likely dropped
-
-Example output:
-```
-Dropped project items (2):
-- define-palette-context
-- fal-context
-
-Dropped MCP servers:
-- vercel (configured but no tools in context)
-```
-
-If no items are missing, report "All project items loaded" and move on.
-
-### 4. Run budget summary
-
-Using the path from step 1, run the summary script:
-```bash
-{path-from-step-1}/bin/summary
-```
-
-**Print the full output in your response** (don't just summarize).
-
-### 5. Run plugin breakdown
-
-```bash
-{path-from-step-1}/bin/plugin-breakdown
-```
-
-**Print the full output in your response** (don't just summarize).
-
-### 6. Summarize findings
-
-Based on the results, provide actionable advice.
-
-**Note:** These scripts measure the **description budget** (15k chars). This is separate from token limits that cause "hidden due to token limits". You can be under the description budget and still have skills hidden due to total content tokens.
-
-**If over 80% of description budget:**
-- Identify the largest consumers
-- Suggest plugins to uninstall if not actively used
-
-**If plugins are the main consumer:**
-- Name the specific plugin(s)
-- Show uninstall command: `claude plugin uninstall <plugin>@<marketplace>`
-
-**If skills are hidden but description budget has headroom:**
-- The issue is likely token limits, not description chars
-- Check MCP tools (e.g., playwright adds ~21k tokens)
-- Project skills load last and get dropped first
-
-### 7. Offer deeper analysis
-
-End with this prompt (not in a blockquote):
-
-**If you'd like to dig deeper into token usage, run `/context` and paste the output here. I can analyze which skills and MCP tools are consuming the most tokens.**
-
-### 8. Analyze /context output (if provided)
-
-When the user pastes `/context` output:
+When the user pastes the output:
 
 **Step 1: Convert to JSON and save**
 
@@ -171,15 +94,94 @@ Calculate and report:
 | MCP servers | N servers, X tools total, Xk tokens |
 | Biggest skill | name (Xk) |
 
-**Step 3: Compare to disk**
+### 4. Verify against your context
 
-If skills are hidden, compare JSON to what exists on disk:
-- List project skills on disk not in JSON → these were dropped
-- List MCP servers in .mcp.json not in JSON → these were dropped
+Introspect your own context window and compare to the JSON from step 3:
 
-**Step 4: Recommendations**
+1. Count skills in your `<available_skills>` section
+2. Compare to what the /context output reported
+3. Note any differences
 
-Based on analysis:
+Example output:
+```
+My context: 77 skills visible
+/context reported: 86 total, 77 shown (9 hidden due to token limits)
+✓ Counts match
+```
+
+### 5. Identify dropped items
+
+**Note:** Hidden items can include both project skills AND MCP tools. Don't assume all hidden items are project skills.
+
+If skills are hidden (step 4):
+
+**5a. Check project skills/commands:**
+
+1. Run the list-project-items script:
+```bash
+{path-from-step-1}/bin/list-project-items
+```
+
+2. Compare output to what's in your `<available_skills>` context under "Project"
+3. Report ONLY items that exist on disk but aren't in context (don't pad to match hidden count)
+
+**5b. Check MCP tools:**
+
+1. Check `.mcp.json` in project root for configured MCP servers
+2. Compare to MCP tools in your context
+3. If a server is configured but has no tools in context, it was likely dropped
+
+Example output:
+```
+Dropped project items (2):
+- define-palette-context
+- fal-context
+
+Dropped MCP servers:
+- vercel (configured but no tools in context)
+```
+
+If no items are missing, report "All project items loaded" and move on.
+
+### 6. Run budget summary
+
+Using the path from step 1, run the summary script:
+```bash
+{path-from-step-1}/bin/summary
+```
+
+**Print the full output in your response** (don't just summarize).
+
+### 7. Run plugin breakdown
+
+```bash
+{path-from-step-1}/bin/plugin-breakdown
+```
+
+**Print the full output in your response** (don't just summarize).
+
+### 8. Summarize findings
+
+Based on the results, provide actionable advice.
+
+**Note:** These scripts measure the **description budget** (15k chars). This is separate from token limits that cause "hidden due to token limits". You can be under the description budget and still have skills hidden due to total content tokens.
+
+**Description budget recommendations:**
+
+**If over 80% of description budget:**
+- Identify the largest consumers
+- Suggest plugins to uninstall if not actively used
+
+**If plugins are the main consumer:**
+- Name the specific plugin(s)
+- Show uninstall command: `claude plugin uninstall <plugin>@<marketplace>`
+
+**Token limit recommendations (from /context JSON):**
+
+**If skills are hidden but description budget has headroom:**
+- The issue is token limits, not description chars
+- Compare JSON to disk: list project skills/MCP servers not in JSON → these were dropped
 - If a plugin skill is >3k tokens, suggest trimming or uninstalling
 - If an MCP server adds >10k tokens, note the cost
 - Identify quick wins (large items that could be removed)
+- Project skills load last and get dropped first
