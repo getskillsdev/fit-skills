@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Show description char usage per installed plugin
+# Usage: plugin-breakdown
+
+set -e
+
+bin_dir="$(cd "$(dirname "$0")/.." && pwd)"
+plugin_items="$bin_dir/all/plugin-items"
+
+# Get JSON from all/plugin-items
+json=$("$plugin_items" 2>/dev/null)
+
+# Check if any plugins
+if [ "$(echo "$json" | jq 'length')" -eq 0 ]; then
+  echo "No plugins installed."
+  exit 0
+fi
+
+echo "Plugin FRONTMATTER Description Usage"
+echo "====================================="
+echo ""
+printf "%-50s %8s\n" "Plugin" "Chars"
+printf "%-50s %8s\n" "------" "-----"
+
+total=0
+
+# Get unique plugin@marketplace combinations
+plugins=$(echo "$json" | jq -r '.[] | "\(.plugin)@\(.marketplace)"' | sort -u)
+
+while IFS= read -r plugin_key; do
+  [ -z "$plugin_key" ] && continue
+
+  # Get all paths for this plugin
+  chars=0
+  while IFS= read -r path; do
+    [ -z "$path" ] && continue
+    line_chars=$(grep "^description:" "$path" 2>/dev/null | head -1 | wc -c | tr -d ' ')
+    chars=$((chars + line_chars))
+  done < <(echo "$json" | jq -r --arg key "$plugin_key" '.[] | select("\(.plugin)@\(.marketplace)" == $key) | .path')
+
+  if [ "$chars" -gt 0 ]; then
+    total=$((total + chars))
+    printf "%-50s %8d\n" "$plugin_key" "$chars"
+  fi
+done <<< "$plugins"
+
+echo ""
+printf "%-50s %8d\n" "TOTAL" "$total"

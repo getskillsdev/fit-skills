@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Output JSON array of project-space skills and commands (.claude in project root)
+# Usage: all/project-items
+#
+# Output: JSON array with objects containing:
+#   - name: skill/command name (commands prefixed with dir:)
+#   - type: "skill" or "command"
+#   - source: "project"
+#   - plugin: null
+
+set -e
+
+# Find project root by walking up from PWD
+check_dir="$PWD"
+project_root=""
+while [ "$check_dir" != "/" ]; do
+  if [ -d "$check_dir/.claude" ]; then
+    project_root="$check_dir"
+    break
+  fi
+  check_dir="$(dirname "$check_dir")"
+done
+
+[ -z "$project_root" ] && { echo "[]"; exit 0; }
+
+bin_dir="$(cd "$(dirname "$0")/.." && pwd)"
+project_dir="$project_root/.claude"
+
+# Start JSON array
+echo "["
+first=true
+
+# Skills (using shared scan-skills helper)
+while IFS='|' read -r path type name; do
+  [ -z "$name" ] && continue
+  [ "$first" = true ] && first=false || echo ","
+  printf '  {"name": "%s", "type": "skill", "source": "project", "plugin": null, "path": "%s"}' "$name" "$path"
+done < <("$bin_dir/scan-skills" "$project_dir/skills" 2>/dev/null)
+
+# Commands (using shared scan-commands helper)
+while IFS='|' read -r path type name; do
+  [ -z "$name" ] && continue
+  [ "$first" = true ] && first=false || echo ","
+  printf '  {"name": "%s", "type": "command", "source": "project", "plugin": null, "path": "%s"}' "$name" "$path"
+done < <("$bin_dir/scan-commands" "$project_dir/commands" 2>/dev/null)
+
+echo ""
+echo "]"

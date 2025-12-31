@@ -8,11 +8,13 @@ set -e
 dir="${1:?Usage: scan-skills <dir>}"
 [ -d "$dir" ] || exit 0
 
-# Find SKILL.md files (directory-style skills)
+# Find SKILL.md files (directory-style skills, case-insensitive)
 while IFS= read -r f; do
+  # Skip bin/ directories (helper scripts, not skills)
+  [[ "$f" == */bin/* ]] && continue
   name=$(basename "$(dirname "$f")")
   echo "$f|skill|$name"
-done < <(find -L "$dir" -name "SKILL.md" -type f 2>/dev/null)
+done < <(find -L "$dir" -iname "SKILL.md" -type f 2>/dev/null)
 
 # Find flat .md files directly in skills/ (not in subdirs, not SKILL.md)
 for f in "$dir"/*.md; do

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@anthropic/mcp-playwright"]
+    },
+    "vercel": {
+      "command": "npx",
+      "args": ["@anthropic/mcp-vercel"]
+    }
+  }
+}

@@ -1,0 +1,6 @@
+[
+  {"name": "my-skill", "type": "skill", "source": "user", "plugin": null},
+  {"name": "blog:post", "type": "command", "source": "user", "plugin": null},
+  {"name": "pptx", "type": "skill", "source": "plugin", "plugin": "document-skills"},
+  {"name": "mcp__playwright__navigate", "type": "MCP", "source": "mcp", "plugin": null}
+]

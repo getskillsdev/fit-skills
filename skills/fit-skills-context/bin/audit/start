@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Start a new skill audit - generate token and capture disk inventory
+# Usage: audit/start
+#
+# Output: Creates skill-audit-YYYY-MM-DD-disk-{token}.json in project root
+# Prints the audit token for use in subsequent steps
+
+set -e
+
+bin_dir="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Find project root by walking up from PWD
+check_dir="$PWD"
+project_root=""
+while [ "$check_dir" != "/" ]; do
+  if [ -d "$check_dir/.claude" ] || [ -f "$check_dir/.mcp.json" ]; then
+    project_root="$check_dir"
+    break
+  fi
+  check_dir="$(dirname "$check_dir")"
+done
+
+[ -z "$project_root" ] && { echo "Error: Could not find project root"; exit 1; }
+
+date_str=$(date +%Y-%m-%d)
+audit_token=$(uuidgen | cut -c1-8 | tr '[:upper:]' '[:lower:]')
+
+disk_file="${project_root}/skill-audit-${date_str}-${audit_token}-disk.json"
+
+"$bin_dir/all/items" > "$disk_file"
+
+echo "Audit token: $audit_token"
+echo "Saved: $disk_file"
+echo ""
+echo "Next: Ask user to run /context and paste output"

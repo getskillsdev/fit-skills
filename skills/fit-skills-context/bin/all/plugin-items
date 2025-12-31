@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# Output JSON array of all installed plugin skills and commands
+# Usage: all/plugin-items
+#
+# Output: JSON array with objects containing:
+#   - name: skill/command name as shown in /context
+#   - type: "skill" or "command"
+#   - source: "plugin"
+#   - plugin: plugin directory name
+#   - marketplace: marketplace directory name
+#   - path: full path to the file
+#
+# Skills: name is just the skill name (e.g., "pptx")
+# Commands: name is prefixed with plugin.json name (e.g., "gsd:fit-skills")
+
+set -e
+
+bin_dir="$(cd "$(dirname "$0")/.." && pwd)"
+plugins_cache="$HOME/.claude/plugins/cache"
+
+if [ ! -d "$plugins_cache" ]; then
+  echo "[]"
+  exit 0
+fi
+
+# Start JSON array
+echo "["
+first=true
+
+for marketplace in "$plugins_cache"/*/; do
+  [ -d "$marketplace" ] || continue
+  marketplace_name=$(basename "$marketplace")
+
+  for plugin in "$marketplace"/*/; do
+    [ -d "$plugin" ] || continue
+    plugin_dir=$(basename "$plugin")
+
+    # Find latest non-orphaned version
+    latest=""
+    for v in $(ls -1 "$plugin" 2>/dev/null | sort -t. -k1,1n -k2,2n -k3,3n); do
+      [ -f "$plugin/$v/.orphaned_at" ] || latest="$v"
+    done
+
+    # Skip if all versions are orphaned (uninstalled)
+    [ -n "$latest" ] || continue
+    version_dir="$plugin/$latest"
+
+    # Get prefix from plugin.json (used for commands)
+    prefix="$plugin_dir"
+    if [ -f "$version_dir/.claude-plugin/plugin.json" ]; then
+      json_name=$(grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' "$version_dir/.claude-plugin/plugin.json" 2>/dev/null | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
+      [ -n "$json_name" ] && prefix="$json_name"
+    fi
+
+    # Process skills (using shared scan-skills helper)
+    while IFS='|' read -r path type name; do
+      [ -z "$name" ] && continue
+      [ "$first" = true ] && first=false || echo ","
+      printf '  {"name": "%s", "type": "skill", "source": "plugin", "plugin": "%s", "marketplace": "%s", "path": "%s"}' "$name" "$plugin_dir" "$marketplace_name" "$path"
+    done < <("$bin_dir/scan-skills" "$version_dir/skills" 2>/dev/null)
+
+    # Process commands (using shared scan-commands helper, add prefix)
+    while IFS='|' read -r path type name; do
+      [ -z "$name" ] && continue
+      full_name="${prefix}:${name}"
+      [ "$first" = true ] && first=false || echo ","
+      printf '  {"name": "%s", "type": "command", "source": "plugin", "plugin": "%s", "marketplace": "%s", "path": "%s"}' "$full_name" "$plugin_dir" "$marketplace_name" "$path"
+    done < <("$bin_dir/scan-commands" "$version_dir/commands" 2>/dev/null)
+  done
+done
+
+echo ""
+echo "]"

@@ -28,7 +28,7 @@ commands_first=true
 skills_chars=0
 commands_chars=0
 
-while IFS='|' read -r path type name; do
+while IFS='|' read -r path type name plugin; do
   [ -z "$path" ] && continue
 
   desc=$(get_description "$path")

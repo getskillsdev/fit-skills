@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Output JSON array of all skills, commands, and MCP servers
+# Usage: all/items
+#
+# Output: JSON array with objects containing:
+#   - name: skill/command/server name
+#   - type: "skill" | "command" | "mcp"
+#   - source: "user" | "plugin" | "project" | "global"
+#   - plugin: plugin directory name (for plugin source) or null
+
+set -e
+
+bin_dir="$(cd "$(dirname "$0")" && pwd)"
+
+{
+  "$bin_dir/user-items"
+  "$bin_dir/plugin-items"
+  "$bin_dir/project-items"
+  "$bin_dir/mcp-items"
+} | jq -s 'add'

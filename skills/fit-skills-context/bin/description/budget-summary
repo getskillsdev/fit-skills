@@ -8,8 +8,8 @@ set -e
 
 LIMIT="${SLASH_COMMAND_TOOL_CHAR_BUDGET:-15000}"
 
-# Find this skill's directory
-skill_dir="$(cd "$(dirname "$0")/.." && pwd)"
+# Find this skill's directory (script is in bin/description/)
+skill_dir="$(cd "$(dirname "$0")/../.." && pwd)"
 audit="$skill_dir/bin/audit-source"
 
 # Generate audits (store in memory via jq)
@@ -36,7 +36,7 @@ proj_total=$(echo "$project" | jq -r '.total_chars // 0')
 proj_skill_count=$(echo "$project" | jq -r '.skills | length')
 proj_cmd_count=$(echo "$project" | jq -r '.commands | length')
 
-echo "=== SKILL BUDGET SUMMARY ==="
+echo "=== SKILL FRONTMATTER DESCRIPTION BUDGET SUMMARY ==="
 echo ""
 echo "Source              Skills    Commands    Total"
 echo "------              ------    --------    -----"
@@ -60,6 +60,6 @@ printf "%-30s %s\n" "Description budget:" "${pct}% used (${grand_total} / ${LIMI
 printf "%-30s %s\n" "Description budget remaining:" "${remaining} chars"
 
 echo ""
-echo "=== TOP CONSUMERS ==="
+echo "=== TOP DESCRIPTION BUDGET CONSUMERS ==="
 echo ""
 "$skill_dir/bin/top-desc-limit-consumers"

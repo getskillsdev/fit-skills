@@ -11,9 +11,16 @@ set -e
 source="${1:?Usage: list-skills <global|plugins|project>}"
 bin_dir="$(cd "$(dirname "$0")" && pwd)"
 
+# Map source names to all/* scripts
 case "$source" in
-  global|plugins|project)
-    exec "$bin_dir/list/$source"
+  global)
+    script="$bin_dir/all/user-items"
+    ;;
+  plugins)
+    script="$bin_dir/all/plugin-items"
+    ;;
+  project)
+    script="$bin_dir/all/project-items"
     ;;
   *)
     echo "Unknown source: $source" >&2
@@ -21,3 +28,6 @@ case "$source" in
     exit 1
     ;;
 esac
+
+# Convert JSON to path|type|name format
+"$script" | jq -r '.[] | "\(.path)|\(.type)|\(.name)"'

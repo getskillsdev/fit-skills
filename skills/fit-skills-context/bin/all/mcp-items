@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Output JSON array of configured MCP servers
+# Usage: all/mcp-items
+#
+# Output: JSON array with objects containing:
+#   - name: server name (e.g., "playwright")
+#   - type: "mcp"
+#   - source: "project" or "global"
+#   - plugin: null
+#   - path: config file path
+
+set -e
+
+# Find project root by walking up from PWD
+check_dir="$PWD"
+project_root=""
+while [ "$check_dir" != "/" ]; do
+  if [ -d "$check_dir/.claude" ] || [ -f "$check_dir/.mcp.json" ]; then
+    project_root="$check_dir"
+    break
+  fi
+  check_dir="$(dirname "$check_dir")"
+done
+
+# Start JSON array
+echo "["
+first=true
+
+# Extract server names from mcpServers object
+extract_servers() {
+  local file="$1"
+  local source="$2"
+  [ -f "$file" ] || return 0
+
+  # Get keys from mcpServers object
+  local servers
+  servers=$(jq -r '.mcpServers // {} | keys[]' "$file" 2>/dev/null) || return 0
+
+  while IFS= read -r name; do
+    [ -z "$name" ] && continue
+    [ "$first" = true ] && first=false || echo ","
+    printf '  {"name": "%s", "type": "mcp", "source": "%s", "plugin": null, "path": "%s"}' "$name" "$source" "$file"
+  done <<< "$servers"
+}
+
+# Project MCP config
+if [ -n "$project_root" ] && [ -f "$project_root/.mcp.json" ]; then
+  extract_servers "$project_root/.mcp.json" "project"
+fi
+
+# Global MCP config
+if [ -f "$HOME/.claude.json" ]; then
+  extract_servers "$HOME/.claude.json" "global"
+fi
+
+echo ""
+echo "]"

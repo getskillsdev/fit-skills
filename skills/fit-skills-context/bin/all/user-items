@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Output JSON array of user-space skills and commands (~/.claude)
+# Usage: all/user-items
+#
+# Output: JSON array with objects containing:
+#   - name: skill/command name
+#   - type: "skill" or "command"
+#   - source: "user"
+#   - plugin: null
+
+set -e
+
+bin_dir="$(cd "$(dirname "$0")/.." && pwd)"
+user_dir="$HOME/.claude"
+
+# Start JSON array
+echo "["
+first=true
+
+# Skills (using shared scan-skills helper)
+while IFS='|' read -r path type name; do
+  [ -z "$name" ] && continue
+  [ "$first" = true ] && first=false || echo ","
+  printf '  {"name": "%s", "type": "skill", "source": "user", "plugin": null, "path": "%s"}' "$name" "$path"
+done < <("$bin_dir/scan-skills" "$user_dir/skills" 2>/dev/null)
+
+# Commands (using shared scan-commands helper)
+while IFS='|' read -r path type name; do
+  [ -z "$name" ] && continue
+  [ "$first" = true ] && first=false || echo ","
+  printf '  {"name": "%s", "type": "command", "source": "user", "plugin": null, "path": "%s"}' "$name" "$path"
+done < <("$bin_dir/scan-commands" "$user_dir/commands" 2>/dev/null)
+
+echo ""
+echo "]"

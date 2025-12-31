@@ -1,0 +1,5 @@
+[
+  {"name": "my-skill", "type": "skill", "source": "user", "plugin": null},
+  {"name": "playwright", "type": "mcp", "source": "project", "plugin": null},
+  {"name": "vercel", "type": "mcp", "source": "project", "plugin": null}
+]

@@ -1,0 +1,5 @@
+[
+  {"name": "my-skill", "tokens": "100", "type": "User"},
+  {"name": "mcp__playwright__navigate", "tokens": "737", "type": "MCP"},
+  {"name": "mcp__playwright__click", "tokens": "575", "type": "MCP"}
+]

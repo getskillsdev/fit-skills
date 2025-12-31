@@ -1,0 +1,6 @@
+[
+  {"name": "my-skill", "type": "skill", "source": "user", "plugin": null},
+  {"name": "dropped-skill", "type": "skill", "source": "project", "plugin": null},
+  {"name": "blog:post", "type": "command", "source": "user", "plugin": null},
+  {"name": "pptx", "type": "skill", "source": "plugin", "plugin": "document-skills"}
+]
