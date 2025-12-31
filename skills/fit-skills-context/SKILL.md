@@ -55,6 +55,7 @@ This skill includes helper scripts in the `bin/` subdirectory:
 - `all/project-items` - JSON array of project-space skills/commands (.claude)
 - `all/mcp-items` - JSON array of configured MCP servers (.mcp.json, ~/.claude.json)
 - `all/compare <disk.json> <context.json>` - Compare two JSON snapshots, show dropped/external items
+- `audit/start` - Start audit: generate token, save disk inventory to project root
 
 ## Instructions
 
@@ -64,15 +65,13 @@ Use the path where you found this SKILL.md file. The scripts are in the `bin/` s
 
 ### 2. Capture disk inventory
 
-Generate a unique audit token and capture the current disk state:
+Run the audit start script:
 
-1. Generate a short unique ID (e.g., first 8 chars of a UUID) - store as `audit-token`
-2. Run the inventory script:
 ```bash
-{path-from-step-1}/bin/all/items > ./skill-audit-YYYY-MM-DD-{audit-token}-disk.json
+{path-from-step-1}/bin/audit/start
 ```
 
-This captures all user, plugin, and project skills/commands as JSON.
+This generates an audit token and saves the disk inventory to project root. Note the token for subsequent steps.
 
 ### 3. Request and save /context output
 
