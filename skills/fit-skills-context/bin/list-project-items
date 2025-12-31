@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# List project skills and commands in normalized format
+# Usage: list-project-items [project-dir]
+#
+# Output format matches available_skills (using : separator):
+#   blog:post
+#   color:complementary
+#   trace-context
+
+set -e
+
+project_dir="${1:-.}"
+claude_dir="$project_dir/.claude"
+
+if [ ! -d "$claude_dir" ]; then
+  echo "No .claude directory found in $project_dir" >&2
+  exit 1
+fi
+
+# List skills (remove .md extension, handle both files and directories)
+if [ -d "$claude_dir/skills" ]; then
+  for item in "$claude_dir/skills"/*; do
+    [ -e "$item" ] || continue
+    base=$(basename "$item")
+    # Directory with SKILL.md
+    if [ -d "$item" ]; then
+      echo "$base"
+    # Flat .md file
+    elif [[ "$base" == *.md ]]; then
+      echo "${base%.md}"
+    fi
+  done
+fi
+
+# List commands (convert path/file.md to path:file)
+# Use -L to follow symlinks
+if [ -d "$claude_dir/commands" ]; then
+  find -L "$claude_dir/commands" -name "*.md" -type f 2>/dev/null | while read -r file; do
+    # Get path relative to commands dir
+    rel="${file#$claude_dir/commands/}"
+    # Remove .md extension
+    rel="${rel%.md}"
+    # Convert / to :
+    echo "${rel//\//:}"
+  done
+fi

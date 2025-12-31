@@ -38,12 +38,12 @@ teardown() {
   [[ "$output" == *"TOTAL"* ]]
 }
 
-@test "summary: shows budget limit" {
+@test "summary: shows description budget" {
   export HOME="$fixtures_dir/home"
   cd "$fixtures_dir/project"
   run "$bin_dir/summary"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Budget:"* ]]
+  [[ "$output" == *"Description budget:"* ]]
   [[ "$output" == *"15000"* ]]
 }
 
@@ -52,7 +52,7 @@ teardown() {
   cd "$fixtures_dir/project"
   run "$bin_dir/summary"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Remaining:"* ]]
+  [[ "$output" == *"Description budget remaining:"* ]]
 }
 
 @test "summary: shows usage percentage" {
@@ -60,8 +60,7 @@ teardown() {
   cd "$fixtures_dir/project"
   run "$bin_dir/summary"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Usage:"* ]]
-  [[ "$output" == *"%"* ]]
+  [[ "$output" == *"% used"* ]]
 }
 
 @test "summary: counts skills from fixtures" {

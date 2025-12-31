@@ -54,7 +54,7 @@ total_cmd_count=$((g_cmd_count + p_cmd_count + proj_cmd_count))
 
 printf "%-18s %8d %11d %8d  (%d skills, %d commands)\n" "TOTAL" "$total_skills" "$total_cmds" "$grand_total" "$total_skill_count" "$total_cmd_count"
 echo ""
-echo "Budget:    $LIMIT"
-echo "Remaining: $((LIMIT - grand_total))"
+remaining=$((LIMIT - grand_total))
 pct=$(awk "BEGIN { printf \"%.1f\", ($grand_total / $LIMIT) * 100 }")
-echo "Usage:     ${pct}%"
+printf "%-30s %s\n" "Description budget:" "${pct}% used (${grand_total} / ${LIMIT} chars)"
+printf "%-30s %s\n" "Description budget remaining:" "${remaining} chars"

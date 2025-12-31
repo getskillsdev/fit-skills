@@ -48,6 +48,7 @@ This skill includes helper scripts in the `bin/` subdirectory:
 - `audit-source <source>` - Generate JSON audit for a source
 - `plugin-breakdown` - Per-plugin breakdown
 - `measure-descriptions` - Count description chars in a directory
+- `list-project-items [dir]` - List project skills/commands in normalized format (for comparison)
 
 ## Instructions
 
@@ -70,16 +71,22 @@ Based on observation, project skills appear to load last (after Global and Plugi
 
 If skills are hidden (step 2), identify which project-level skills/commands are missing:
 
-1. List project skills on disk: `ls .claude/skills/`
-2. List project commands on disk: `find .claude/commands -name "*.md"`
-3. Compare to what's in your `<available_skills>` context under "Project"
-4. Report any that exist on disk but aren't in your context
+1. Run the list-project-items script to get normalized names:
+```bash
+{path-from-step-1}/bin/list-project-items
+```
+
+2. Compare output to what's in your `<available_skills>` context under "Project"
+3. Report ALL items that exist on disk but aren't in your context (do not summarize)
 
 Example output:
 ```
-Dropped project skills (not in context):
+Dropped project items (not in context):
 - define-palette-context
 - fal-context
+- color:complementary
+- color:define-palette
+- content:hook
 ```
 
 If no skills are hidden, skip this step.
@@ -122,9 +129,9 @@ Based on the results, provide actionable advice.
 
 ### 7. Offer deeper analysis
 
-End with this prompt:
+End with this prompt (not in a blockquote):
 
-> If you'd like to dig deeper into token usage, run `/context` and paste the output here. I can analyze which skills and MCP tools are consuming the most tokens.
+**If you'd like to dig deeper into token usage, run `/context` and paste the output here. I can analyze which skills and MCP tools are consuming the most tokens.**
 
 ### 8. Analyze /context output (if provided)
 
