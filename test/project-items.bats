@@ -83,3 +83,30 @@ teardown() {
   # commands/sub/cmd.md becomes sub:cmd
   echo "$output" | jq -e '.[] | select(.name == "sub:cmd")'
 }
+
+@test "all/project-items: marks standalone .md skill as invalid" {
+  export HOME="$fixtures_dir/home"
+  cd "$fixtures_dir/project-with-invalid"
+  run "$bin_dir/all/project-items"
+  [ "$status" -eq 0 ]
+  invalid_value=$(echo "$output" | jq -r '.[] | select(.name == "invalid-project-standalone") | .invalid')
+  [ -n "$invalid_value" ]
+  [ "$invalid_value" != "null" ]
+}
+
+@test "all/project-items: valid directory skill has no invalid field" {
+  export HOME="$fixtures_dir/home"
+  cd "$fixtures_dir/project-with-invalid"
+  run "$bin_dir/all/project-items"
+  [ "$status" -eq 0 ]
+  invalid_value=$(echo "$output" | jq -r '.[] | select(.name == "valid-project-skill") | .invalid')
+  [ "$invalid_value" = "null" ]
+}
+
+@test "all/project-items: invalid field explains the error" {
+  export HOME="$fixtures_dir/home"
+  cd "$fixtures_dir/project-with-invalid"
+  result=$("$bin_dir/all/project-items")
+  invalid_msg=$(echo "$result" | jq -r '.[] | select(.name == "invalid-project-standalone") | .invalid')
+  [[ "$invalid_msg" == *"standalone"* ]] || [[ "$invalid_msg" == *"directory"* ]]
+}

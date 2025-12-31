@@ -17,9 +17,10 @@ while IFS= read -r f; do
 done < <(find -L "$dir" -iname "SKILL.md" -type f 2>/dev/null)
 
 # Find flat .md files directly in skills/ (not in subdirs, not SKILL.md)
+# These are INVALID - Claude Code only loads directory-style skills
 for f in "$dir"/*.md; do
   [ -f "$f" ] || continue
   base=$(basename "$f" .md)
   [[ "$base" == "SKILL" || "$base" == "skill" ]] && continue
-  echo "$f|skill|$base"
+  echo "$f|skill|$base|standalone .md files are not loaded by Claude Code - use directory with SKILL.md"
 done

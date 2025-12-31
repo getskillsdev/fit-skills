@@ -143,6 +143,14 @@ Using the path from step 1, run the summary script:
 
 Based on the results, provide actionable advice.
 
+**Check for invalid items first:**
+
+The disk JSON may contain items with `"invalid": "..."` field. These are standalone `.md` files in the skills folder - Claude Code ignores them entirely. They are NOT "dropped due to token limits" - they were never loadable.
+
+If invalid items exist:
+- Report them separately: "Invalid (not loadable): skill-name — standalone .md file, convert to directory with SKILL.md"
+- Provide fix: `mkdir ~/.claude/skills/skill-name && mv ~/.claude/skills/skill-name.md ~/.claude/skills/skill-name/SKILL.md`
+
 **Note:** `description/budget-summary` and `description/plugin-breakdown` measure the **description budget** (15k chars). This is separate from token limits that cause "hidden due to token limits". You can be under the description budget and still have skills hidden due to total content tokens.
 
 **Description budget recommendations:**
@@ -157,9 +165,10 @@ Based on the results, provide actionable advice.
 
 **Token limit recommendations (from /context JSON):**
 
-**If skills are hidden but description budget has headroom:**
+**If valid skills are dropped (not invalid) and description budget has headroom:**
 - The issue is token limits, not description chars
 - **IMPORTANT:** `SLASH_COMMAND_TOOL_CHAR_BUDGET` does NOT help here - it only affects description budget
+- Do NOT report invalid items as "token limit issues" - they are simply not loadable
 - There is no env var to increase token limits - the only fix is to remove items
 - Step 4's `all/compare` output shows what was dropped
 - If a plugin skill is >3k tokens, suggest trimming or uninstalling

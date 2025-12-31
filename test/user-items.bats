@@ -90,3 +90,29 @@ teardown() {
   echo "$output" | jq -e '.[] | select(.name == "test-context")'
   [[ "$output" != *"helper"* ]]
 }
+
+@test "all/user-items: marks standalone .md skill as invalid" {
+  export HOME="$fixtures_dir/home-with-invalid"
+  run "$bin_dir/all/user-items"
+  [ "$status" -eq 0 ]
+  # Check that invalid-standalone has invalid field
+  invalid_value=$(echo "$output" | jq -r '.[] | select(.name == "invalid-standalone") | .invalid')
+  [ -n "$invalid_value" ]
+  [ "$invalid_value" != "null" ]
+}
+
+@test "all/user-items: valid directory skill has no invalid field" {
+  export HOME="$fixtures_dir/home-with-invalid"
+  run "$bin_dir/all/user-items"
+  [ "$status" -eq 0 ]
+  # Check that valid-skill has invalid: null
+  invalid_value=$(echo "$output" | jq -r '.[] | select(.name == "valid-skill") | .invalid')
+  [ "$invalid_value" = "null" ]
+}
+
+@test "all/user-items: invalid field explains the error" {
+  export HOME="$fixtures_dir/home-with-invalid"
+  result=$("$bin_dir/all/user-items")
+  invalid_msg=$(echo "$result" | jq -r '.[] | select(.name == "invalid-standalone") | .invalid')
+  [[ "$invalid_msg" == *"standalone"* ]] || [[ "$invalid_msg" == *"directory"* ]]
+}

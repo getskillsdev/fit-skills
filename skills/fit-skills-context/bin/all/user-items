@@ -18,10 +18,14 @@ echo "["
 first=true
 
 # Skills (using shared scan-skills helper)
-while IFS='|' read -r path type name; do
+while IFS='|' read -r path type name invalid; do
   [ -z "$name" ] && continue
   [ "$first" = true ] && first=false || echo ","
-  printf '  {"name": "%s", "type": "skill", "source": "user", "plugin": null, "path": "%s"}' "$name" "$path"
+  if [ -n "$invalid" ]; then
+    printf '  {"name": "%s", "type": "skill", "source": "user", "plugin": null, "path": "%s", "invalid": "%s"}' "$name" "$path" "$invalid"
+  else
+    printf '  {"name": "%s", "type": "skill", "source": "user", "plugin": null, "path": "%s", "invalid": null}' "$name" "$path"
+  fi
 done < <("$bin_dir/scan-skills" "$user_dir/skills" 2>/dev/null)
 
 # Commands (using shared scan-commands helper)

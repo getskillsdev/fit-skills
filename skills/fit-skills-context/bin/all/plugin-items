@@ -53,10 +53,14 @@ for marketplace in "$plugins_cache"/*/; do
     fi
 
     # Process skills (using shared scan-skills helper)
-    while IFS='|' read -r path type name; do
+    while IFS='|' read -r path type name invalid; do
       [ -z "$name" ] && continue
       [ "$first" = true ] && first=false || echo ","
-      printf '  {"name": "%s", "type": "skill", "source": "plugin", "plugin": "%s", "marketplace": "%s", "path": "%s"}' "$name" "$plugin_dir" "$marketplace_name" "$path"
+      if [ -n "$invalid" ]; then
+        printf '  {"name": "%s", "type": "skill", "source": "plugin", "plugin": "%s", "marketplace": "%s", "path": "%s", "invalid": "%s"}' "$name" "$plugin_dir" "$marketplace_name" "$path" "$invalid"
+      else
+        printf '  {"name": "%s", "type": "skill", "source": "plugin", "plugin": "%s", "marketplace": "%s", "path": "%s", "invalid": null}' "$name" "$plugin_dir" "$marketplace_name" "$path"
+      fi
     done < <("$bin_dir/scan-skills" "$version_dir/skills" 2>/dev/null)
 
     # Process commands (using shared scan-commands helper, add prefix)
