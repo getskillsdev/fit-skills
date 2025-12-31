@@ -47,6 +47,7 @@ This skill includes helper scripts in the `bin/` subdirectory:
 - `list-skills <source>` - List skills/commands for global|plugins|project
 - `audit-source <source>` - Generate JSON audit for a source
 - `plugin-breakdown` - Per-plugin breakdown
+- `top-desc-limit-consumers [limit]` - Top consumers by description chars (default: 5)
 - `measure-descriptions` - Count description chars in a directory
 - `list-project-items [dir]` - List project skills/commands in normalized format (for comparison)
 
@@ -94,28 +95,11 @@ Calculate and report:
 | MCP servers | N servers, X tools total, Xk tokens |
 | Biggest skill | name (Xk) |
 
-### 4. Verify against your context
+### 4. Identify dropped items
 
-Introspect your own context window and compare to the JSON from step 3:
+Compare what's on disk to what's in the /context JSON to find dropped items.
 
-1. Count skills in your `<available_skills>` section
-2. Compare to what the /context output reported
-3. Note any differences
-
-Example output:
-```
-My context: 77 skills visible
-/context reported: 86 total, 77 shown (9 hidden due to token limits)
-✓ Counts match
-```
-
-### 5. Identify dropped items
-
-**Note:** Hidden items can include both project skills AND MCP tools. Don't assume all hidden items are project skills.
-
-If skills are hidden (step 4):
-
-**5a. Check project skills/commands:**
+**4a. Check project skills/commands:**
 
 1. Run the list-project-items script:
 ```bash
@@ -125,7 +109,7 @@ If skills are hidden (step 4):
 2. Compare output to what's in your `<available_skills>` context under "Project"
 3. Report ONLY items that exist on disk but aren't in context (don't pad to match hidden count)
 
-**5b. Check MCP tools:**
+**4b. Check MCP tools:**
 
 1. Check `.mcp.json` in project root for configured MCP servers
 2. Compare to MCP tools in your context
@@ -143,7 +127,7 @@ Dropped MCP servers:
 
 If no items are missing, report "All project items loaded" and move on.
 
-### 6. Run budget summary
+### 5. Run budget summary
 
 Using the path from step 1, run the summary script:
 ```bash
@@ -152,7 +136,7 @@ Using the path from step 1, run the summary script:
 
 **Print the full output in your response** (don't just summarize).
 
-### 7. Run plugin breakdown
+### 6. Run plugin breakdown
 
 ```bash
 {path-from-step-1}/bin/plugin-breakdown
@@ -160,7 +144,7 @@ Using the path from step 1, run the summary script:
 
 **Print the full output in your response** (don't just summarize).
 
-### 8. Summarize findings
+### 7. Summarize findings
 
 Based on the results, provide actionable advice.
 

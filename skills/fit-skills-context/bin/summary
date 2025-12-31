@@ -58,3 +58,8 @@ remaining=$((LIMIT - grand_total))
 pct=$(awk "BEGIN { printf \"%.1f\", ($grand_total / $LIMIT) * 100 }")
 printf "%-30s %s\n" "Description budget:" "${pct}% used (${grand_total} / ${LIMIT} chars)"
 printf "%-30s %s\n" "Description budget remaining:" "${remaining} chars"
+
+echo ""
+echo "=== TOP CONSUMERS ==="
+echo ""
+"$skill_dir/bin/top-desc-limit-consumers"

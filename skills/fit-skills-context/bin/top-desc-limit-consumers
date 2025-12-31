@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Show top consumers of description budget across all sources
+# Usage: top-desc-limit-consumers [limit]
+#   limit: number of items to show (default: 20)
+#
+# Output: sorted list of skills/commands by description char count
+
+set -e
+
+limit="${1:-5}"
+skill_dir="$(cd "$(dirname "$0")/.." && pwd)"
+list_skills="$skill_dir/bin/list-skills"
+
+# Collect all items with their description sizes
+collect_items() {
+  local source="$1"
+
+  while IFS='|' read -r path type name; do
+    [ -z "$path" ] && continue
+    [ ! -f "$path" ] && continue
+
+    # Count full description line chars (including "description: " prefix)
+    line_chars=$(grep "^description:" "$path" 2>/dev/null | head -1 | wc -c | tr -d ' ')
+    [ "$line_chars" -eq 0 ] && continue
+
+    printf "%d|%s|%s|%s\n" "$line_chars" "$source" "$type" "$name"
+  done < <("$list_skills" "$source" 2>/dev/null || true)
+}
+
+# Header
+printf "%-6s  %-8s  %-8s  %s\n" "Chars" "Source" "Type" "Name"
+printf "%-6s  %-8s  %-8s  %s\n" "-----" "------" "----" "----"
+
+# Collect from all sources, sort by chars descending, take top N
+{
+  collect_items "global"
+  collect_items "plugins"
+  collect_items "project"
+} | sort -t'|' -k1 -nr | head -n "$limit" | while IFS='|' read -r chars source type name; do
+  printf "%-6d  %-8s  %-8s  %s\n" "$chars" "$source" "$type" "$name"
+done
