@@ -65,31 +65,39 @@ Do not announce what you're doing. Just output, similar to below:
 Context window: 86 skills total, 77 shown (9 hidden due to token limits)
 ```
 
-### 3. Identify dropped project skills
+### 3. Identify dropped items
 
-Based on observation, project skills appear to load last (after Global and Plugin). When the budget is exceeded, **project skills are likely dropped first**.
+**Note:** Hidden items can include both project skills AND MCP tools. Don't assume all hidden items are project skills.
 
-If skills are hidden (step 2), identify which project-level skills/commands are missing:
+If skills are hidden (step 2):
 
-1. Run the list-project-items script to get normalized names:
+**3a. Check project skills/commands:**
+
+1. Run the list-project-items script:
 ```bash
 {path-from-step-1}/bin/list-project-items
 ```
 
 2. Compare output to what's in your `<available_skills>` context under "Project"
-3. Report ALL items that exist on disk but aren't in your context (do not summarize)
+3. Report ONLY items that exist on disk but aren't in context (don't pad to match hidden count)
+
+**3b. Check MCP tools:**
+
+1. Check `.mcp.json` in project root for configured MCP servers
+2. Compare to MCP tools in your context
+3. If a server is configured but has no tools in context, it was likely dropped
 
 Example output:
 ```
-Dropped project items (not in context):
+Dropped project items (2):
 - define-palette-context
 - fal-context
-- color:complementary
-- color:define-palette
-- content:hook
+
+Dropped MCP servers:
+- vercel (configured but no tools in context)
 ```
 
-If no skills are hidden, skip this step.
+If no items are missing, report "All project items loaded" and move on.
 
 ### 4. Run budget summary
 
@@ -148,9 +156,9 @@ Parse each skill/tool into structured format:
 ]
 ```
 
-Save to project root as: `skill-token-audit-YYYY-MM-DD.<project-name>.json`
+Save to project root directory (`.`), not a subdirectory:
 
-Example: `skill-token-audit-2025-12-30.my-project.json`
+`./skill-token-audit-YYYY-MM-DD.<project-name>.json`
 
 **Step 2: Extract metrics**
 
@@ -158,12 +166,10 @@ Calculate and report:
 
 | Metric | Value |
 |--------|-------|
-| Total skills loaded | X |
+| Total skills loaded | X (User + Project + Plugin) |
 | Total tokens (skills) | Xk |
-| Total MCP tools | X |
-| Total tokens (MCP) | Xk |
+| MCP servers | N servers, X tools total, Xk tokens |
 | Biggest skill | name (Xk) |
-| Biggest MCP consumer | server (Xk across N tools) |
 
 **Step 3: Compare to disk**
 
