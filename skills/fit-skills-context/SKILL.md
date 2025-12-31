@@ -6,15 +6,26 @@ allowed-tools: Read, Bash
 
 # Skill Limits Audit
 
-Check how much of the 15,000 character skill description budget is being used.
+There are **two separate limits** that affect skill loading:
 
-Skill names and descriptions are loaded into the system prompt at startup. The default limit is ~15,000 characters. Skills over the limit are silently dropped.
+## 1. Description Budget (15k chars)
+
+Skill names and descriptions are loaded into the system prompt. The default limit is ~15,000 characters for all descriptions combined. This is what the scripts in this skill measure.
+
+**Increase:** `SLASH_COMMAND_TOOL_CHAR_BUDGET=30000 claude`
+
+## 2. Token Limit (content + MCP tools)
+
+The full content of skills, commands, and MCP tools consume context window tokens. Even if you're under the 15k description budget, skills can still be "hidden due to token limits" if total content tokens exceed the limit.
+
+Things that consume tokens:
+- Full SKILL.md content (not just descriptions)
+- MCP tool definitions (e.g., playwright adds ~21k tokens for 34 tools)
+- Project skills (appear to load last, dropped first when over budget)
 
 **References:**
 - [Skill authoring best practices](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices) - individual limits (1024 chars per description)
 - [Claude Code skills not triggering?](https://blog.fsck.com/2025/12/17/claude-code-skills-not-triggering/) - explains the 15k default budget
-
-**Increase budget:** `SLASH_COMMAND_TOOL_CHAR_BUDGET=30000 claude`
 
 ## Individual Skill Limits
 
@@ -53,7 +64,27 @@ Do not announce what you're doing. Just output, similar to below:
 Context window: 86 skills total, 77 shown (9 hidden due to token limits)
 ```
 
-### 3. Run budget summary
+### 3. Identify dropped project skills
+
+Based on observation, project skills appear to load last (after Global and Plugin). When the budget is exceeded, **project skills are likely dropped first**.
+
+If skills are hidden (step 2), identify which project-level skills/commands are missing:
+
+1. List project skills on disk: `ls .claude/skills/`
+2. List project commands on disk: `find .claude/commands -name "*.md"`
+3. Compare to what's in your `<available_skills>` context under "Project"
+4. Report any that exist on disk but aren't in your context
+
+Example output:
+```
+Dropped project skills (not in context):
+- define-palette-context
+- fal-context
+```
+
+If no skills are hidden, skip this step.
+
+### 4. Run budget summary
 
 Using the path from step 1, run the summary script:
 ```bash
@@ -62,7 +93,7 @@ Using the path from step 1, run the summary script:
 
 **Print the full output in your response** (don't just summarize).
 
-### 4. Run plugin breakdown
+### 5. Run plugin breakdown
 
 ```bash
 {path-from-step-1}/bin/plugin-breakdown
@@ -70,14 +101,72 @@ Using the path from step 1, run the summary script:
 
 **Print the full output in your response** (don't just summarize).
 
-### 5. Summarize findings
+### 6. Summarize findings
 
-Based on the results, provide actionable advice:
+Based on the results, provide actionable advice.
 
-**If over 80% used:**
+**Note:** These scripts measure the **description budget** (15k chars). This is separate from token limits that cause "hidden due to token limits". You can be under the description budget and still have skills hidden due to total content tokens.
+
+**If over 80% of description budget:**
 - Identify the largest consumers
 - Suggest plugins to uninstall if not actively used
 
 **If plugins are the main consumer:**
 - Name the specific plugin(s)
 - Show uninstall command: `claude plugin uninstall <plugin>@<marketplace>`
+
+**If skills are hidden but description budget has headroom:**
+- The issue is likely token limits, not description chars
+- Check MCP tools (e.g., playwright adds ~21k tokens)
+- Project skills load last and get dropped first
+
+### 7. Offer deeper analysis
+
+End with this prompt:
+
+> If you'd like to dig deeper into token usage, run `/context` and paste the output here. I can analyze which skills and MCP tools are consuming the most tokens.
+
+### 8. Analyze /context output (if provided)
+
+When the user pastes `/context` output:
+
+**Step 1: Convert to JSON and save**
+
+Parse each skill/tool into structured format:
+```json
+[
+  {"name": "spec-context", "tokens": "4.4k", "type": "User"},
+  {"name": "pptx", "tokens": "6.3k", "type": "Plugin"},
+  {"name": "mcp__playwright__navigate", "tokens": "737", "type": "MCP"}
+]
+```
+
+Save to project root as: `skill-token-audit-YYYY-MM-DD.<project-name>.json`
+
+Example: `skill-token-audit-2025-12-30.my-project.json`
+
+**Step 2: Extract metrics**
+
+Calculate and report:
+
+| Metric | Value |
+|--------|-------|
+| Total skills loaded | X |
+| Total tokens (skills) | Xk |
+| Total MCP tools | X |
+| Total tokens (MCP) | Xk |
+| Biggest skill | name (Xk) |
+| Biggest MCP consumer | server (Xk across N tools) |
+
+**Step 3: Compare to disk**
+
+If skills are hidden, compare JSON to what exists on disk:
+- List project skills on disk not in JSON → these were dropped
+- List MCP servers in .mcp.json not in JSON → these were dropped
+
+**Step 4: Recommendations**
+
+Based on analysis:
+- If a plugin skill is >3k tokens, suggest trimming or uninstalling
+- If an MCP server adds >10k tokens, note the cost
+- Identify quick wins (large items that could be removed)

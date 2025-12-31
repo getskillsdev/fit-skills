@@ -6,7 +6,7 @@
 
 set -e
 
-LIMIT=15000
+LIMIT="${SLASH_COMMAND_TOOL_CHAR_BUDGET:-15000}"
 
 # Find this skill's directory
 skill_dir="$(cd "$(dirname "$0")/.." && pwd)"
