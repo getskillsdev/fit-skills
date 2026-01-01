@@ -8,7 +8,18 @@
 #   - source: "project" or "global"
 #   - plugin: null
 #   - path: config file path
-#   - disabled: true if in disabledMcpServers, null otherwise
+#   - disabled: true if disabled, null otherwise
+#
+# MCP Config Locations (3 scopes):
+#   1. User config:    ~/.claude.json → mcpServers (available in all projects)
+#   2. Project config: .mcp.json → mcpServers (shared via repo, checked into git)
+#   3. Local config:   ~/.claude.json → projects[path].mcpServers (private to you)
+#
+# Disabled State (checked in ~/.claude.json at 2 levels × 2 fields = 4 places):
+#   Global:  .disabledMcpServers, .disabledMcpjsonServers
+#   Project: .projects[path].disabledMcpServers, .projects[path].disabledMcpjsonServers
+#
+# Note: .mcp.json only defines servers, disabled state is always in ~/.claude.json
 
 set -e
 
@@ -23,10 +34,26 @@ while [ "$check_dir" != "/" ]; do
   check_dir="$(dirname "$check_dir")"
 done
 
-# Get disabled servers from ~/.claude.json for this project
+# Get disabled servers from ~/.claude.json (all 4 places)
+# Resolve symlinks to match how Claude stores project paths
 disabled_servers=""
-if [ -n "$project_root" ] && [ -f "$HOME/.claude.json" ]; then
-  disabled_servers=$(jq -r ".projects[\"$project_root\"].disabledMcpServers // [] | .[]" "$HOME/.claude.json" 2>/dev/null || echo "")
+if [ -f "$HOME/.claude.json" ]; then
+  resolved_root=""
+  if [ -n "$project_root" ]; then
+    resolved_root=$(readlink -f "$project_root" 2>/dev/null || echo "$project_root")
+  fi
+
+  # Collect from all 4 places into one list
+  disabled_servers=$(jq -r --arg proj "$resolved_root" '
+    [
+      # Global level
+      (.disabledMcpServers // []),
+      (.disabledMcpjsonServers // []),
+      # Project level (if path provided)
+      (if $proj != "" then .projects[$proj].disabledMcpServers // [] else [] end),
+      (if $proj != "" then .projects[$proj].disabledMcpjsonServers // [] else [] end)
+    ] | flatten | unique | .[]
+  ' "$HOME/.claude.json" 2>/dev/null || echo "")
 fi
 
 # Check if a server is disabled

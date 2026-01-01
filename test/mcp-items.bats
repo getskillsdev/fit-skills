@@ -110,7 +110,7 @@ EOF
   # Create temp config with global server + disabled state
   local tmp_home=$(mktemp -d)
   mkdir -p "$tmp_home/.claude"
-  local project_path="$tmp_home"
+  local project_path=$(readlink -f "$tmp_home")
   cat > "$tmp_home/.claude.json" <<EOF
 {
   "mcpServers": {
@@ -136,6 +136,7 @@ EOF
 @test "all/mcp-items: disabled in local config affects both project and global MCP" {
   # Create temp config with both project .mcp.json and global mcpServers
   local tmp_home=$(mktemp -d)
+  local resolved_home=$(readlink -f "$tmp_home")
   mkdir -p "$tmp_home/.claude"
   cat > "$tmp_home/.mcp.json" <<EOF
 {"mcpServers": {"vercel": {"command": "npx", "args": []}}}
@@ -146,7 +147,7 @@ EOF
     "astro-docs": {"command": "npx", "args": []}
   },
   "projects": {
-    "$tmp_home": {
+    "$resolved_home": {
       "disabledMcpServers": ["vercel", "astro-docs"]
     }
   }
@@ -159,4 +160,130 @@ EOF
   [ "$status" -eq 0 ]
   echo "$output" | jq -e '.[] | select(.name == "vercel" and .source == "project" and .disabled == true)'
   echo "$output" | jq -e '.[] | select(.name == "astro-docs" and .source == "global" and .disabled == true)'
+}
+
+@test "all/mcp-items: global disabledMcpServers disables servers in all projects" {
+  local tmp_home=$(mktemp -d)
+  cat > "$tmp_home/.mcp.json" <<EOF
+{"mcpServers": {"vercel": {"command": "npx", "args": []}}}
+EOF
+  cat > "$tmp_home/.claude.json" <<EOF
+{
+  "disabledMcpServers": ["vercel"]
+}
+EOF
+  export HOME="$tmp_home"
+  cd "$tmp_home"
+  run "$bin_dir/all/mcp-items"
+  rm -rf "$tmp_home"
+  [ "$status" -eq 0 ]
+  echo "$output" | jq -e '.[] | select(.name == "vercel" and .disabled == true)'
+}
+
+@test "all/mcp-items: disabledMcpjsonServers at project level disables servers" {
+  local tmp_home=$(mktemp -d)
+  local resolved_home=$(readlink -f "$tmp_home")
+  cat > "$tmp_home/.mcp.json" <<EOF
+{"mcpServers": {"playwright": {"command": "npx", "args": []}}}
+EOF
+  cat > "$tmp_home/.claude.json" <<EOF
+{
+  "projects": {
+    "$resolved_home": {
+      "disabledMcpjsonServers": ["playwright"]
+    }
+  }
+}
+EOF
+  export HOME="$tmp_home"
+  cd "$tmp_home"
+  run "$bin_dir/all/mcp-items"
+  rm -rf "$tmp_home"
+  [ "$status" -eq 0 ]
+  echo "$output" | jq -e '.[] | select(.name == "playwright" and .disabled == true)'
+}
+
+@test "all/mcp-items: disabledMcpjsonServers at global level disables servers" {
+  local tmp_home=$(mktemp -d)
+  cat > "$tmp_home/.mcp.json" <<EOF
+{"mcpServers": {"memory": {"command": "npx", "args": []}}}
+EOF
+  cat > "$tmp_home/.claude.json" <<EOF
+{
+  "disabledMcpjsonServers": ["memory"]
+}
+EOF
+  export HOME="$tmp_home"
+  cd "$tmp_home"
+  run "$bin_dir/all/mcp-items"
+  rm -rf "$tmp_home"
+  [ "$status" -eq 0 ]
+  echo "$output" | jq -e '.[] | select(.name == "memory" and .disabled == true)'
+}
+
+@test "all/mcp-items: combines all 4 disabled sources" {
+  local tmp_home=$(mktemp -d)
+  local resolved_home=$(readlink -f "$tmp_home")
+  cat > "$tmp_home/.mcp.json" <<EOF
+{"mcpServers": {
+  "srv1": {"command": "npx", "args": []},
+  "srv2": {"command": "npx", "args": []},
+  "srv3": {"command": "npx", "args": []},
+  "srv4": {"command": "npx", "args": []},
+  "enabled": {"command": "npx", "args": []}
+}}
+EOF
+  cat > "$tmp_home/.claude.json" <<EOF
+{
+  "disabledMcpServers": ["srv1"],
+  "disabledMcpjsonServers": ["srv2"],
+  "projects": {
+    "$resolved_home": {
+      "disabledMcpServers": ["srv3"],
+      "disabledMcpjsonServers": ["srv4"]
+    }
+  }
+}
+EOF
+  export HOME="$tmp_home"
+  cd "$tmp_home"
+  run "$bin_dir/all/mcp-items"
+  rm -rf "$tmp_home"
+  [ "$status" -eq 0 ]
+  # All 4 should be disabled
+  echo "$output" | jq -e '.[] | select(.name == "srv1" and .disabled == true)'
+  echo "$output" | jq -e '.[] | select(.name == "srv2" and .disabled == true)'
+  echo "$output" | jq -e '.[] | select(.name == "srv3" and .disabled == true)'
+  echo "$output" | jq -e '.[] | select(.name == "srv4" and .disabled == true)'
+  # One should be enabled
+  echo "$output" | jq -e '.[] | select(.name == "enabled" and .disabled == null)'
+}
+
+@test "all/mcp-items: resolves symlinks when checking disabled status" {
+  local tmp_home=$(mktemp -d)
+  local real_project=$(mktemp -d)
+  local resolved_project=$(readlink -f "$real_project")
+  local symlink_project="$tmp_home/symlink-project"
+  ln -s "$real_project" "$symlink_project"
+
+  cat > "$real_project/.mcp.json" <<EOF
+{"mcpServers": {"vercel": {"command": "npx", "args": []}}}
+EOF
+  # Config uses fully resolved path (matches what script will resolve to)
+  cat > "$tmp_home/.claude.json" <<EOF
+{
+  "projects": {
+    "$resolved_project": {
+      "disabledMcpServers": ["vercel"]
+    }
+  }
+}
+EOF
+  export HOME="$tmp_home"
+  cd "$symlink_project"
+  run "$bin_dir/all/mcp-items"
+  rm -rf "$tmp_home" "$real_project"
+  [ "$status" -eq 0 ]
+  # Should find disabled status even when running from symlink
+  echo "$output" | jq -e '.[] | select(.name == "vercel" and .disabled == true)'
 }
