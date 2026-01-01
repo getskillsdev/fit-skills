@@ -18,10 +18,14 @@ Skill names and descriptions are loaded into the system prompt. The default limi
 
 The full content of skills, commands, and MCP tools consume context window tokens. Even if you're under the 15k description budget, skills can still be "hidden due to token limits" if total content tokens exceed the limit.
 
-Things that consume tokens:
+**IMPORTANT:** `/context` shows token counts for skills **on disk**, not what's currently loaded. Claude only loads skill frontmatter (name/description) at startup. Full skill content is loaded **when the skill is invoked**. So a skill showing "24.8k tokens" in `/context` means it WOULD consume that much when triggered, not that it's currently using those tokens.
+
+Things that consume tokens when loaded:
 - Full SKILL.md content (not just descriptions)
 - MCP tool definitions
 - Project skills (appear to load last, dropped first when over budget)
+
+**Observed ceiling:** ~794k tokens before skills start being dropped (tested Jan 2026).
 
 **References:**
 - [Skill authoring best practices](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices) - individual limits (1024 chars per description - not enforced)
@@ -214,9 +218,15 @@ The `compare/summary` output has FOUR sections:
 - If a single skill is >3k tokens, it's a heavy consumer worth noting
 - If a plugin totals >10k tokens, consider whether all its skills are needed
 
-**Token limit recommendations (from /context JSON):**
+**Determining which limit caused drops:**
 
-**If skills appear in step 9's dropped list and description budget has headroom:**
+You cannot definitively tell whether a skill was dropped due to description budget or token limits. Use this heuristic:
+- **If description budget > 100%** → Assume description budget is the cause. Fix this first before investigating token limits.
+- **If description budget OK but skills still missing** → Then it's token limits.
+
+**Token limit recommendations (only if description budget has headroom):**
+
+**If skills appear in step 9's dropped list and description budget is under 100%:**
 - The issue is token limits, not description chars
 - **IMPORTANT:** `SLASH_COMMAND_TOOL_CHAR_BUDGET` does NOT help here - it only affects description budget
 - Do NOT report KNOWN INVALID items as "token limit issues" - they are simply not loadable

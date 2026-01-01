@@ -6,6 +6,19 @@ Did your Claude stuff its context window with too many bloated skills?
 
 <img src="./logo.png" alt="fit-skills logo" width="200">
 
+## Why use this?
+
+Answers the frustrating "why isn't my skill loading?" question:
+
+- **Description budget usage** - are you over the 15k char limit?
+- **Token usage per plugin** - which plugins consume the most?
+- **Disk vs context comparison** - what's configured vs what's loaded?
+- **Disabled MCP detection** - servers toggled off but forgotten?
+- **Invalid skill detection** - standalone .md files that won't load?
+- **Dropped skills** - identify what got cut due to token limits
+
+## Overview
+
 Use this diagnostic tool to analyse skills across:
 - `User` (global)
 - `plugin`
