@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Show top consumers by token usage from context.json
+# Usage: token-usage/top-consumers <context.json> [limit]
+
+set -e
+
+context_file="${1:?Usage: token-usage/top-consumers <context.json> [limit]}"
+limit="${2:-10}"
+
+if [ ! -f "$context_file" ]; then
+  echo "Error: File not found: $context_file" >&2
+  exit 1
+fi
+
+# Parse token string to number (e.g., "6.2k" -> 6200, "605" -> 605)
+# Done in jq for efficiency
+jq -r --argjson limit "$limit" '
+  def parse_tokens:
+    if test("k$") then
+      (.[:-1] | tonumber) * 1000 | floor
+    else
+      tonumber
+    end;
+
+  [.[] | {name, type, tokens_raw: .tokens, tokens_num: (.tokens | parse_tokens)}]
+  | sort_by(-.tokens_num)
+  | .[0:$limit]
+  | ["Tokens", "Type", "Name"],
+    ["------", "------", "----"],
+    (.[] | [.tokens_raw, .type, .name])
+  | @tsv
+' "$context_file" | column -t -s $'\t'

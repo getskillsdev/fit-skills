@@ -1,0 +1,6 @@
+[
+  {"name": "pptx", "type": "skill", "source": "plugin", "plugin": "test-plugin", "marketplace": "test-marketplace"},
+  {"name": "docx", "type": "skill", "source": "plugin", "plugin": "test-plugin", "marketplace": "test-marketplace"},
+  {"name": "skill-a", "type": "skill", "source": "project", "plugin": null, "marketplace": null},
+  {"name": "my-skill", "type": "skill", "source": "user", "plugin": null, "marketplace": null}
+]

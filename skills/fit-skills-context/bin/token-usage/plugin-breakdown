@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# Show token usage per installed plugin
+# Usage: token-usage/plugin-breakdown <context.json> <disk.json>
+
+set -e
+
+context_file="${1:?Usage: token-usage/plugin-breakdown <context.json> <disk.json>}"
+disk_file="${2:?Usage: token-usage/plugin-breakdown <context.json> <disk.json>}"
+
+if [ ! -f "$context_file" ]; then
+  echo "Error: File not found: $context_file" >&2
+  exit 1
+fi
+
+if [ ! -f "$disk_file" ]; then
+  echo "Error: File not found: $disk_file" >&2
+  exit 1
+fi
+
+echo "Plugin TOKEN Usage"
+echo "=================="
+echo ""
+
+# Join context (has tokens) with disk (has plugin field)
+# Filter to Plugin type only, group by plugin@marketplace, sum tokens
+jq -r --slurpfile disk "$disk_file" '
+  def parse_tokens:
+    if test("k$") then
+      (.[:-1] | tonumber) * 1000 | floor
+    else
+      tonumber
+    end;
+
+  # Build lookup from disk: name -> {plugin, marketplace}
+  ($disk[0] | map(select(.source == "plugin")) | map({(.name): {plugin: .plugin, marketplace: .marketplace}}) | add) as $lookup |
+
+  # Filter context to Plugin type, join with disk info
+  [.[] | select(.type == "Plugin") |
+    {name, tokens_raw: .tokens, tokens_num: (.tokens | parse_tokens)} +
+    ($lookup[.name] // {plugin: "unknown", marketplace: "unknown"})
+  ] |
+
+  # Group by plugin@marketplace
+  group_by("\(.plugin)@\(.marketplace)") |
+
+  # Sum tokens per group
+  map({
+    plugin_key: (.[0].plugin + "@" + .[0].marketplace),
+    total_tokens: (map(.tokens_num) | add),
+    count: length
+  }) |
+
+  # Sort by tokens descending
+  sort_by(-.total_tokens) |
+
+  # Format output
+  ["Plugin", "Skills", "Tokens"],
+  ["------", "------", "------"],
+  (.[] | [.plugin_key, (.count | tostring),
+    (if .total_tokens >= 1000 then
+      ((.total_tokens / 1000 * 10 | floor) / 10 | tostring) + "k"
+    else
+      .total_tokens | tostring
+    end)
+  ]),
+  ["", "", ""],
+  ["TOTAL",
+    (map(.count) | add | tostring),
+    (map(.total_tokens) | add |
+      if . >= 1000 then
+        ((. / 1000 * 10 | floor) / 10 | tostring) + "k"
+      else
+        tostring
+      end)
+  ]
+  | @tsv
+' "$context_file" | column -t -s $'\t'

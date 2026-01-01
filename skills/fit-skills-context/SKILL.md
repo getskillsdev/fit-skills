@@ -56,6 +56,8 @@ This skill includes helper scripts in the `bin/` subdirectory:
 - `all/mcp-items` - JSON array of configured MCP servers (.mcp.json, ~/.claude.json)
 - `compare/summary <disk.json> <context.json>` - Compare two JSON snapshots, show categorized sections
 - `audit/start` - Start audit: generate token, save disk inventory to project root
+- `token-usage/top-consumers <context.json> [limit]` - Top consumers by tokens (default: 10)
+- `token-usage/plugin-breakdown <context.json> <disk.json>` - Token usage per plugin
 
 ## Instructions
 
@@ -134,7 +136,23 @@ Using the path from step 1, run the summary script:
 
 **Print the full output in your response** (don't just summarize).
 
-### 7. Check for dropped skills (token limits)
+### 7. Run token usage top consumers
+
+```bash
+{path-from-step-1}/bin/token-usage/top-consumers ./skill-audit-YYYY-MM-DD-{audit-token}-context.json
+```
+
+**Print the full output in your response** (don't just summarize).
+
+### 8. Run token usage plugin breakdown
+
+```bash
+{path-from-step-1}/bin/token-usage/plugin-breakdown ./skill-audit-YYYY-MM-DD-{audit-token}-context.json ./skill-audit-YYYY-MM-DD-{audit-token}-disk.json
+```
+
+**Print the full output in your response** (don't just summarize).
+
+### 9. Check for dropped skills (token limits)
 
 `<available_skills>` is a section in your system prompt listing loaded skills. Check if you can see it, and look for a line similar to:
 
@@ -159,7 +177,7 @@ Use the same JSON format as other audit files.
 
 If no truncation message appears, skip this step.
 
-### 8. Summarize findings
+### 10. Summarize findings
 
 Based on the results, provide actionable advice.
 
@@ -175,7 +193,7 @@ The `compare/summary` output has FOUR sections:
 - "Invalid (not loadable): skill-name — use directory with SKILL.md instead"
 - Provide fix: `mkdir ~/.claude/skills/skill-name && mv ~/.claude/skills/skill-name.md ~/.claude/skills/skill-name/SKILL.md`
 
-**Note:** Items in UNKNOWN INVALID may or may not be token limit issues. Step 7 uses `<available_skills>` to identify items specifically dropped due to token limits.
+**Note:** Items in UNKNOWN INVALID may or may not be token limit issues. Step 9 uses `<available_skills>` to identify items specifically dropped due to token limits.
 
 **Note:** `description/budget-summary` and `description/plugin-breakdown` measure the **description budget** (15k chars). This is separate from token limits that cause "hidden due to token limits". You can be under the description budget and still have skills hidden due to total content tokens.
 
@@ -189,14 +207,21 @@ The `compare/summary` output has FOUR sections:
 - Name the specific plugin(s)
 - Show uninstall command: `claude plugin uninstall <plugin>@<marketplace>`
 
+**Use the token usage output (steps 7-8):**
+
+- `top-consumers` shows which individual skills use the most tokens
+- `plugin-breakdown` shows total token cost per installed plugin
+- If a single skill is >3k tokens, it's a heavy consumer worth noting
+- If a plugin totals >10k tokens, consider whether all its skills are needed
+
 **Token limit recommendations (from /context JSON):**
 
-**If skills appear in step 7's dropped list and description budget has headroom:**
+**If skills appear in step 9's dropped list and description budget has headroom:**
 - The issue is token limits, not description chars
 - **IMPORTANT:** `SLASH_COMMAND_TOOL_CHAR_BUDGET` does NOT help here - it only affects description budget
 - Do NOT report KNOWN INVALID items as "token limit issues" - they are simply not loadable
 - There is no env var to increase token limits - the only fix is to remove items
-- Step 7's dropped.json shows what was dropped due to token limits
+- Step 9's dropped.json shows what was dropped due to token limits
 - If a plugin skill is >3k tokens, suggest trimming or uninstalling
 - If an MCP server adds >10k tokens, note the cost
 - Identify quick wins (large items that could be removed)

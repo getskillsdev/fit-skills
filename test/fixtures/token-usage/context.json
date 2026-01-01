@@ -1,0 +1,7 @@
+[
+  {"name": "pptx", "tokens": "6.3k", "type": "Plugin"},
+  {"name": "skill-a", "tokens": "6.2k", "type": "Project"},
+  {"name": "docx", "tokens": "2.4k", "type": "Plugin"},
+  {"name": "my-skill", "tokens": "500", "type": "User"},
+  {"name": "mcp__test__tool", "tokens": "100", "type": "MCP"}
+]
