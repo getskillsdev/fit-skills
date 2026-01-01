@@ -39,8 +39,8 @@ echo "On disk:    $disk_count items"
 echo "In context: $context_count items"
 echo ""
 
-# Items on disk but not in context (dropped)
-echo "=== DROPPED (on disk but not in context) ==="
+# Items on disk but not in context - split into INVALID vs DROPPED
+invalid_output=""
 dropped_output=""
 while read -r name; do
   [ -z "$name" ] && continue
@@ -56,12 +56,30 @@ while read -r name; do
     fi
   fi
 
+  # Check if item has invalid field set
+  invalid_msg=$(jq -r ".[] | select(.name == \"$name\") | .invalid // empty" "$disk_file" | head -1)
+
   # Get type:source for each occurrence (handles duplicates)
   info=$(jq -r ".[] | select(.name == \"$name\") | \"\(.type):\(.source)\"" "$disk_file" | sort -u | paste -sd, -)
-  dropped_output="${dropped_output}- $name ($info)
+
+  if [ -n "$invalid_msg" ] && [ "$invalid_msg" != "null" ]; then
+    invalid_output="${invalid_output}- $name ($info) — $invalid_msg
 "
+  else
+    dropped_output="${dropped_output}- $name ($info)
+"
+  fi
 done < <(comm -23 "$tmp_dir/disk-names.txt" "$tmp_dir/context-names.txt")
 
+echo "=== INVALID (not loadable by Claude Code) ==="
+if [ -z "$invalid_output" ]; then
+  echo "(none)"
+else
+  printf "%s" "$invalid_output"
+fi
+echo ""
+
+echo "=== DROPPED (on disk but not in context) ==="
 if [ -z "$dropped_output" ]; then
   echo "(none)"
 else

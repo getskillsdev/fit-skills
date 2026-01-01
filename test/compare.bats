@@ -92,3 +92,23 @@ setup() {
   # vercel has no mcp__vercel__* tools in context, SHOULD be dropped
   [[ "$output" == *"vercel (mcp:project)"* ]]
 }
+
+@test "all/compare: shows INVALID section" {
+  run "$bin_dir/all/compare" "$fixtures_dir/disk-with-invalid.json" "$fixtures_dir/context-missing-both.json"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"=== INVALID (not loadable by Claude Code) ==="* ]]
+}
+
+@test "all/compare: invalid items appear in INVALID section" {
+  run "$bin_dir/all/compare" "$fixtures_dir/disk-with-invalid.json" "$fixtures_dir/context-missing-both.json"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"invalid-standalone"* ]]
+  [[ "$output" == *"standalone .md files"* ]]
+}
+
+@test "all/compare: valid dropped items appear in DROPPED section" {
+  run "$bin_dir/all/compare" "$fixtures_dir/disk-with-invalid.json" "$fixtures_dir/context-missing-both.json"
+  [ "$status" -eq 0 ]
+  # valid-skill should be in DROPPED, not INVALID
+  [[ "$output" == *"=== DROPPED"*"valid-skill"* ]]
+}

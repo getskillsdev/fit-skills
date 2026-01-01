@@ -117,8 +117,15 @@ Run the compare script with both saved files:
 Save output to: `./skill-audit-YYYY-MM-DD-{audit-token}-compare.txt`
 
 The script shows:
-- **DROPPED**: Items on disk but not in context (skills, commands, or MCP servers hidden due to token limits)
+- **INVALID**: Standalone `.md` files that Claude Code ignores (not a token limit issue)
+- **DROPPED**: Valid items on disk but not in context (hidden due to token limits)
 - **EXTERNAL**: Items in context but not on disk (individual MCP tool definitions like `mcp__playwright__navigate`)
+
+**MCP servers in DROPPED section:** If an MCP server appears as dropped, it might not be a token limit issue — the server may have failed to start. Debug with:
+- Run `/mcp` to check server status
+- Run `claude mcp list` to see configured servers
+- Run `claude --debug` to see connection attempts
+- Check that `.mcp.json` is in project root (not `.claude/.mcp.json`)
 
 If no items are missing, report "All items loaded" and move on.
 
@@ -143,13 +150,18 @@ Using the path from step 1, run the summary script:
 
 Based on the results, provide actionable advice.
 
-**Check for invalid items first:**
+**Use the compare output sections:**
 
-The disk JSON may contain items with `"invalid": "..."` field. These are standalone `.md` files in the skills folder - Claude Code ignores them entirely. They are NOT "dropped due to token limits" - they were never loadable.
+The `all/compare` output has THREE sections:
+1. `=== INVALID ===` — Items that are NOT loadable (standalone .md files). These are NOT token limit issues.
+2. `=== DROPPED ===` — Valid items hidden due to token limits.
+3. `=== EXTERNAL ===` — MCP tools (expected, ignore).
 
-If invalid items exist:
-- Report them separately: "Invalid (not loadable): skill-name — standalone .md file, convert to directory with SKILL.md"
+**CRITICAL:** Items in the INVALID section must NEVER be reported as "hidden due to token limits". They are simply not loadable. Report them as:
+- "Invalid (not loadable): skill-name — use directory with SKILL.md instead"
 - Provide fix: `mkdir ~/.claude/skills/skill-name && mv ~/.claude/skills/skill-name.md ~/.claude/skills/skill-name/SKILL.md`
+
+**Only items in the DROPPED section** are token limit issues.
 
 **Note:** `description/budget-summary` and `description/plugin-breakdown` measure the **description budget** (15k chars). This is separate from token limits that cause "hidden due to token limits". You can be under the description budget and still have skills hidden due to total content tokens.
 

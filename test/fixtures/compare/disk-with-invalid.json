@@ -1,0 +1,5 @@
+[
+  {"name": "valid-skill", "type": "skill", "source": "user", "invalid": null},
+  {"name": "invalid-standalone", "type": "skill", "source": "user", "invalid": "standalone .md files are not loaded by Claude Code"},
+  {"name": "another-valid", "type": "command", "source": "user", "invalid": null}
+]
