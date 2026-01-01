@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Show top consumers of description budget across all sources
-# Usage: top-desc-limit-consumers [limit]
+# Usage: description/top-consumers [limit]
 #   limit: number of items to show (default: 20)
 #
 # Output: sorted list of skills/commands by description char count
@@ -8,7 +8,7 @@
 set -e
 
 limit="${1:-5}"
-skill_dir="$(cd "$(dirname "$0")/.." && pwd)"
+skill_dir="$(cd "$(dirname "$0")/../.." && pwd)"
 list_skills="$skill_dir/bin/list-skills"
 
 # Collect all items with their description sizes

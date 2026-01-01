@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Output items in disk.json that are NOT in context.json
+# Usage: minus/disk-from-context <disk.json> <context.json>
+#
+# Output: JSON array of disk items whose names don't appear in context
+# These are INVALID items (on disk but not configured/loadable)
+
+set -e
+
+disk_file="${1:?Usage: minus/disk-from-context <disk.json> <context.json>}"
+context_file="${2:?Usage: minus/disk-from-context <disk.json> <context.json>}"
+
+[ -f "$disk_file" ] || { echo "Error: File not found: $disk_file" >&2; exit 1; }
+[ -f "$context_file" ] || { echo "Error: File not found: $context_file" >&2; exit 1; }
+
+# Get names from context as a filter
+context_names=$(jq -r '.[].name' "$context_file")
+
+# Output disk items whose name is not in context
+jq --argjson context_names "$(jq '[.[].name]' "$context_file")" \
+  '[.[] | select(.name as $n | $context_names | index($n) | not)]' \
+  "$disk_file"

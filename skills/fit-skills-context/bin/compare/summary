@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Compare two JSON inventory files (disk snapshot vs context snapshot)
-# Usage: all/compare <disk-json> <context-json>
+# Usage: compare/summary <disk-json> <context-json>
 #
 # Output:
 #   - Items in disk but not in context (dropped due to token limits)
@@ -8,8 +8,8 @@
 
 set -e
 
-disk_file="${1:?Usage: all/compare <disk-json> <context-json>}"
-context_file="${2:?Usage: all/compare <disk-json> <context-json>}"
+disk_file="${1:?Usage: compare/summary <disk-json> <context-json>}"
+context_file="${2:?Usage: compare/summary <disk-json> <context-json>}"
 
 if [ ! -f "$disk_file" ]; then
   echo "Error: File not found: $disk_file" >&2
@@ -39,8 +39,9 @@ echo "On disk:    $disk_count items"
 echo "In context: $context_count items"
 echo ""
 
-# Items on disk but not in context - split into INVALID vs DROPPED
+# Items on disk but not in context - split into INVALID, DISABLED, DROPPED
 invalid_output=""
+disabled_output=""
 dropped_output=""
 while read -r name; do
   [ -z "$name" ] && continue
@@ -59,11 +60,17 @@ while read -r name; do
   # Check if item has invalid field set
   invalid_msg=$(jq -r ".[] | select(.name == \"$name\") | .invalid // empty" "$disk_file" | head -1)
 
+  # Check if MCP server is disabled
+  is_disabled=$(jq -r ".[] | select(.name == \"$name\") | .disabled // empty" "$disk_file" | head -1)
+
   # Get type:source for each occurrence (handles duplicates)
   info=$(jq -r ".[] | select(.name == \"$name\") | \"\(.type):\(.source)\"" "$disk_file" | sort -u | paste -sd, -)
 
   if [ -n "$invalid_msg" ] && [ "$invalid_msg" != "null" ]; then
     invalid_output="${invalid_output}- $name ($info) — $invalid_msg
+"
+  elif [ "$is_disabled" = "true" ]; then
+    disabled_output="${disabled_output}- $name ($info)
 "
   else
     dropped_output="${dropped_output}- $name ($info)
@@ -71,7 +78,7 @@ while read -r name; do
   fi
 done < <(comm -23 "$tmp_dir/disk-names.txt" "$tmp_dir/context-names.txt")
 
-echo "=== INVALID (not loadable by Claude Code) ==="
+echo "=== KNOWN INVALID (not loadable by Claude Code) ==="
 if [ -z "$invalid_output" ]; then
   echo "(none)"
 else
@@ -79,7 +86,15 @@ else
 fi
 echo ""
 
-echo "=== DROPPED (on disk but not in context) ==="
+echo "=== DISABLED (intentionally turned off) ==="
+if [ -z "$disabled_output" ]; then
+  echo "(none)"
+else
+  printf "%s" "$disabled_output"
+fi
+echo ""
+
+echo "=== UNKNOWN INVALID (on disk but not in context) ==="
 if [ -z "$dropped_output" ]; then
   echo "(none)"
 else
@@ -88,7 +103,7 @@ fi
 echo ""
 
 # Items in context but not on disk (MCP tools, etc.)
-echo "=== EXTERNAL (in context but not on disk) ==="
+echo "=== MCP LOADED TOOLS ==="
 external=$(comm -13 "$tmp_dir/disk-names.txt" "$tmp_dir/context-names.txt")
 if [ -z "$external" ]; then
   echo "(none)"

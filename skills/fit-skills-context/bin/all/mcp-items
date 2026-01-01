@@ -8,6 +8,7 @@
 #   - source: "project" or "global"
 #   - plugin: null
 #   - path: config file path
+#   - disabled: true if in disabledMcpServers, null otherwise
 
 set -e
 
@@ -21,6 +22,18 @@ while [ "$check_dir" != "/" ]; do
   fi
   check_dir="$(dirname "$check_dir")"
 done
+
+# Get disabled servers from ~/.claude.json for this project
+disabled_servers=""
+if [ -n "$project_root" ] && [ -f "$HOME/.claude.json" ]; then
+  disabled_servers=$(jq -r ".projects[\"$project_root\"].disabledMcpServers // [] | .[]" "$HOME/.claude.json" 2>/dev/null || echo "")
+fi
+
+# Check if a server is disabled
+is_disabled() {
+  local name="$1"
+  echo "$disabled_servers" | grep -qx "$name" 2>/dev/null
+}
 
 # Start JSON array
 echo "["
@@ -39,7 +52,11 @@ extract_servers() {
   while IFS= read -r name; do
     [ -z "$name" ] && continue
     [ "$first" = true ] && first=false || echo ","
-    printf '  {"name": "%s", "type": "mcp", "source": "%s", "plugin": null, "path": "%s"}' "$name" "$source" "$file"
+    if is_disabled "$name"; then
+      printf '  {"name": "%s", "type": "mcp", "source": "%s", "plugin": null, "path": "%s", "disabled": true}' "$name" "$source" "$file"
+    else
+      printf '  {"name": "%s", "type": "mcp", "source": "%s", "plugin": null, "path": "%s", "disabled": null}' "$name" "$source" "$file"
+    fi
   done <<< "$servers"
 }
 

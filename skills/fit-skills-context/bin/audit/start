@@ -31,5 +31,3 @@ disk_file="${project_root}/skill-audit-${date_str}-${audit_token}-disk.json"
 
 echo "Audit token: $audit_token"
 echo "Saved: $disk_file"
-echo ""
-echo "Next: Ask user to run /context and paste output"

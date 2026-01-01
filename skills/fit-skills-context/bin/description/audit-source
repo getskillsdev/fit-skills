@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Audit skill/command descriptions for a source and output JSON
-# Usage: audit-source <source> [output_file]
+# Usage: description/audit-source <source> [output_file]
 #   source: global | plugins | project
 #
 # Output: JSON object with skills array
@@ -11,7 +11,7 @@ source="${1:?Usage: audit-source <global|plugins|project> [output_file]}"
 output_file="${2:-}"
 
 # Find this skill's directory
-skill_dir="$(cd "$(dirname "$0")/.." && pwd)"
+skill_dir="$(cd "$(dirname "$0")/../.." && pwd)"
 list_skills="$skill_dir/bin/list-skills"
 
 # Extract description from frontmatter

@@ -83,3 +83,80 @@ teardown() {
   # Should have both project (2) and global (1) servers
   [ "$(echo "$output" | jq 'length')" -eq 3 ]
 }
+
+@test "all/mcp-items: disabled project MCP shows disabled: true" {
+  # Create temp config with correct project path
+  local tmp_home=$(mktemp -d)
+  local project_path="$fixtures_dir/project"
+  cat > "$tmp_home/.claude.json" <<EOF
+{
+  "projects": {
+    "$project_path": {
+      "disabledMcpServers": ["vercel"]
+    }
+  }
+}
+EOF
+  export HOME="$tmp_home"
+  cd "$project_path"
+  run "$bin_dir/all/mcp-items"
+  rm -rf "$tmp_home"
+  [ "$status" -eq 0 ]
+  echo "$output" | jq -e '.[] | select(.name == "vercel" and .disabled == true)'
+  echo "$output" | jq -e '.[] | select(.name == "playwright" and .disabled == null)'
+}
+
+@test "all/mcp-items: disabled global MCP shows disabled: true" {
+  # Create temp config with global server + disabled state
+  local tmp_home=$(mktemp -d)
+  mkdir -p "$tmp_home/.claude"
+  local project_path="$tmp_home"
+  cat > "$tmp_home/.claude.json" <<EOF
+{
+  "mcpServers": {
+    "astro-docs": {"command": "npx", "args": ["@anthropic/mcp-astro"]},
+    "memory": {"command": "npx", "args": ["@anthropic/mcp-memory"]}
+  },
+  "projects": {
+    "$project_path": {
+      "disabledMcpServers": ["astro-docs"]
+    }
+  }
+}
+EOF
+  export HOME="$tmp_home"
+  cd "$tmp_home"
+  run "$bin_dir/all/mcp-items"
+  rm -rf "$tmp_home"
+  [ "$status" -eq 0 ]
+  echo "$output" | jq -e '.[] | select(.name == "astro-docs" and .disabled == true)'
+  echo "$output" | jq -e '.[] | select(.name == "memory" and .disabled == null)'
+}
+
+@test "all/mcp-items: disabled in local config affects both project and global MCP" {
+  # Create temp config with both project .mcp.json and global mcpServers
+  local tmp_home=$(mktemp -d)
+  mkdir -p "$tmp_home/.claude"
+  cat > "$tmp_home/.mcp.json" <<EOF
+{"mcpServers": {"vercel": {"command": "npx", "args": []}}}
+EOF
+  cat > "$tmp_home/.claude.json" <<EOF
+{
+  "mcpServers": {
+    "astro-docs": {"command": "npx", "args": []}
+  },
+  "projects": {
+    "$tmp_home": {
+      "disabledMcpServers": ["vercel", "astro-docs"]
+    }
+  }
+}
+EOF
+  export HOME="$tmp_home"
+  cd "$tmp_home"
+  run "$bin_dir/all/mcp-items"
+  rm -rf "$tmp_home"
+  [ "$status" -eq 0 ]
+  echo "$output" | jq -e '.[] | select(.name == "vercel" and .source == "project" and .disabled == true)'
+  echo "$output" | jq -e '.[] | select(.name == "astro-docs" and .source == "global" and .disabled == true)'
+}

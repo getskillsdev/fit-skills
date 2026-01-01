@@ -11,52 +11,52 @@ teardown() {
   [ -n "$TMP_DIR" ] && rm -rf "$TMP_DIR" || true
 }
 
-@test "audit-source: requires source argument" {
-  run "$bin_dir/audit-source"
+@test "description/audit-source: requires source argument" {
+  run "$bin_dir/description/audit-source"
   [ "$status" -eq 1 ]
   [[ "$output" == *"Usage"* ]]
 }
 
-@test "audit-source: outputs valid JSON" {
+@test "description/audit-source: outputs valid JSON" {
   export HOME="$fixtures_dir/home"
-  run "$bin_dir/audit-source" global
+  run "$bin_dir/description/audit-source" global
   [ "$status" -eq 0 ]
   echo "$output" | jq '.' >/dev/null
 }
 
-@test "audit-source: includes source in output" {
+@test "description/audit-source: includes source in output" {
   export HOME="$fixtures_dir/home"
-  run "$bin_dir/audit-source" global
+  run "$bin_dir/description/audit-source" global
   [ "$status" -eq 0 ]
   [ "$(echo "$output" | jq -r '.source')" = "global" ]
 }
 
-@test "audit-source: includes audit_date" {
+@test "description/audit-source: includes audit_date" {
   export HOME="$fixtures_dir/home"
-  run "$bin_dir/audit-source" global
+  run "$bin_dir/description/audit-source" global
   [ "$status" -eq 0 ]
   [ "$(echo "$output" | jq -r '.audit_date')" = "$(date +%Y-%m-%d)" ]
 }
 
-@test "audit-source: counts skills from fixtures" {
+@test "description/audit-source: counts skills from fixtures" {
   export HOME="$fixtures_dir/home"
-  run "$bin_dir/audit-source" global
+  run "$bin_dir/description/audit-source" global
   [ "$status" -eq 0 ]
   # fixtures/home has 2 skills
   [ "$(echo "$output" | jq '.skills | length')" -eq 2 ]
 }
 
-@test "audit-source: counts commands from fixtures" {
+@test "description/audit-source: counts commands from fixtures" {
   export HOME="$fixtures_dir/home"
-  run "$bin_dir/audit-source" global
+  run "$bin_dir/description/audit-source" global
   [ "$status" -eq 0 ]
   # fixtures/home has 2 commands (my-cmd, blog:post)
   [ "$(echo "$output" | jq '.commands | length')" -eq 2 ]
 }
 
-@test "audit-source: calculates total_chars correctly" {
+@test "description/audit-source: calculates total_chars correctly" {
   export HOME="$fixtures_dir/home"
-  run "$bin_dir/audit-source" global
+  run "$bin_dir/description/audit-source" global
   [ "$status" -eq 0 ]
 
   skills_chars=$(echo "$output" | jq '.skills_chars')
@@ -66,18 +66,18 @@ teardown() {
   [ "$total_chars" -eq $((skills_chars + commands_chars)) ]
 }
 
-@test "audit-source: writes to output file when specified" {
+@test "description/audit-source: writes to output file when specified" {
   export HOME="$fixtures_dir/home"
   TMP_DIR="$(mktemp -d)"
-  run "$bin_dir/audit-source" global "$TMP_DIR/output.json"
+  run "$bin_dir/description/audit-source" global "$TMP_DIR/output.json"
   [ "$status" -eq 0 ]
   [ -f "$TMP_DIR/output.json" ]
   jq '.' "$TMP_DIR/output.json" >/dev/null
 }
 
-@test "audit-source: handles empty source gracefully" {
+@test "description/audit-source: handles empty source gracefully" {
   export HOME="$fixtures_dir/empty-home"
-  run "$bin_dir/audit-source" global
+  run "$bin_dir/description/audit-source" global
   [ "$status" -eq 0 ]
   [ "$(echo "$output" | jq '.skills | length')" -eq 0 ]
   [ "$(echo "$output" | jq '.commands | length')" -eq 0 ]

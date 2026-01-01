@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Measure total description chars in a directory
-# Usage: measure-descriptions <path>
+# Usage: description/count-total-chars <path>
 #
 # Searches for "description:" in frontmatter and counts total chars.
 
-path="${1:?Usage: measure-descriptions <path>}"
+path="${1:?Usage: description/count-total-chars <path>}"
 
 if [ ! -d "$path" ]; then
   echo "0"

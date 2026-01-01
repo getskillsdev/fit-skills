@@ -20,11 +20,11 @@ The full content of skills, commands, and MCP tools consume context window token
 
 Things that consume tokens:
 - Full SKILL.md content (not just descriptions)
-- MCP tool definitions (e.g., playwright adds ~21k tokens for 34 tools)
+- MCP tool definitions
 - Project skills (appear to load last, dropped first when over budget)
 
 **References:**
-- [Skill authoring best practices](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices) - individual limits (1024 chars per description)
+- [Skill authoring best practices](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices) - individual limits (1024 chars per description - not enforced)
 - [Claude Code skills not triggering?](https://blog.fsck.com/2025/12/17/claude-code-skills-not-triggering/) - explains the 15k default budget
 
 ## Individual Skill Limits
@@ -34,7 +34,7 @@ Per [Skill authoring best practices](https://platform.claude.com/docs/en/agents-
 | Field | Required | Constraints |
 |-------|----------|-------------|
 | `name` | Yes | ≤64 chars, lowercase letters/numbers/hyphens only |
-| `description` | Yes | ≤1024 chars, what it does + when to use, third person |
+| `description` | Yes | ≤1024 chars (not enforced), what it does + when to use, third person |
 | `allowed-tools` | No | Comma-separated list of tools to restrict access |
 
 Keep SKILL.md body under 500 lines for optimal performance.
@@ -45,16 +45,16 @@ This skill includes helper scripts in the `bin/` subdirectory:
 
 - `description/budget-summary` - Full budget summary with counts
 - `list-skills <source>` - List skills/commands for global|plugins|project
-- `audit-source <source>` - Generate JSON audit for a source
+- `description/audit-source <source>` - Generate JSON audit for a source
 - `description/plugin-breakdown` - Per-plugin breakdown
-- `top-desc-limit-consumers [limit]` - Top consumers by description chars (default: 5)
-- `measure-descriptions` - Count description chars in a directory
+- `description/top-consumers [limit]` - Top consumers by description chars (default: 5)
+- `description/count-total-chars` - Count description chars in a directory
 - `all/items` - Combined JSON of all sources (user, plugin, project, MCP)
 - `all/user-items` - JSON array of user-space skills/commands (~/.claude)
 - `all/plugin-items` - JSON array of plugin skills/commands with plugin field
 - `all/project-items` - JSON array of project-space skills/commands (.claude)
 - `all/mcp-items` - JSON array of configured MCP servers (.mcp.json, ~/.claude.json)
-- `all/compare <disk.json> <context.json>` - Compare two JSON snapshots, show dropped/external items
+- `compare/summary <disk.json> <context.json>` - Compare two JSON snapshots, show categorized sections
 - `audit/start` - Start audit: generate token, save disk inventory to project root
 
 ## Instructions
@@ -77,13 +77,13 @@ This generates an audit token and saves the disk inventory to project root. Note
 
 Ask the user:
 
-**Although I can see what skills are in my context window, I can't see token usage. Please run `/context` and paste the output here.**
+**Although I can see what skills are in my context window, I can't see token usage until you run `/context`. Please run `/context` and then type OK <enter>**
 
-When the user pastes the output:
+`<local-command-stdout>` is a tag in your context containing output from slash commands the user runs. Trust me - you will only be aware of the tag's existence once the user has run `/context` - otherwise you might think it's user-error. It exists! When the user enters OK or similar after running `/context`, look for this tag. If you cannot see it, the user has not run `/context` - ask them to run again.
 
 **Step 1: Convert to JSON and save**
 
-Parse each skill/tool into structured format:
+Parse each skill/tool from `<local-command-stdout>` into structured format:
 ```json
 [
   {"name": "spec-context", "tokens": "4.4k", "type": "User"},
@@ -107,29 +107,36 @@ Calculate and report:
 | MCP servers | N servers, X tools total, Xk tokens |
 | Biggest skill | name (Xk) |
 
-### 4. Identify dropped items
+### 4. Find invalid items
+
+```bash
+{path-from-step-1}/bin/compare/on-disk-not-in-context ./skill-audit-YYYY-MM-DD-{audit-token}-disk.json ./skill-audit-YYYY-MM-DD-{audit-token}-context.json > ./skill-audit-YYYY-MM-DD-{audit-token}-invalid.json
+```
+
+Read the saved file. If it contains `[]`, all disk items are valid.
+
+### 5. Compare items on disk, but not in context
 
 Run the compare script with both saved files:
 ```bash
-{path-from-step-1}/bin/all/compare ./skill-audit-YYYY-MM-DD-{audit-token}-disk.json ./skill-audit-YYYY-MM-DD-{audit-token}-context.json
+{path-from-step-1}/bin/compare/summary ./skill-audit-YYYY-MM-DD-{audit-token}-disk.json ./skill-audit-YYYY-MM-DD-{audit-token}-context.json
 ```
 
 Save output to: `./skill-audit-YYYY-MM-DD-{audit-token}-compare.txt`
 
 The script shows:
-- **INVALID**: Standalone `.md` files that Claude Code ignores (not a token limit issue)
-- **DROPPED**: Valid items on disk but not in context (hidden due to token limits)
-- **EXTERNAL**: Items in context but not on disk (individual MCP tool definitions like `mcp__playwright__navigate`)
+- **KNOWN INVALID**: Standalone `.md` files that Claude Code ignores (not a token limit issue)
+- **DISABLED**: MCP servers intentionally turned off via `/mcp` toggle
+- **UNKNOWN INVALID**: On disk but not in context (reason unknown)
+- **MCP LOADED TOOLS**: Individual MCP tool definitions from working servers (e.g., `mcp__playwright__navigate`)
 
-**MCP servers in DROPPED section:** If an MCP server appears as dropped, it might not be a token limit issue — the server may have failed to start. Debug with:
+**MCP servers in UNKNOWN INVALID section:** If an MCP server appears here, the server may have failed to start. Debug with:
 - Run `/mcp` to check server status
 - Run `claude mcp list` to see configured servers
 - Run `claude --debug` to see connection attempts
 - Check that `.mcp.json` is in project root (not `.claude/.mcp.json`)
 
-If no items are missing, report "All items loaded" and move on.
-
-### 5. Run budget summary
+### 6. Run budget summary
 
 Using the path from step 1, run the summary script:
 ```bash
@@ -138,7 +145,7 @@ Using the path from step 1, run the summary script:
 
 **Print the full output in your response** (don't just summarize).
 
-### 6. Run plugin breakdown
+### 7. Run plugin breakdown
 
 ```bash
 {path-from-step-1}/bin/description/plugin-breakdown
@@ -146,22 +153,48 @@ Using the path from step 1, run the summary script:
 
 **Print the full output in your response** (don't just summarize).
 
-### 7. Summarize findings
+### 8. Check for dropped skills (token limits)
+
+`<available_skills>` is a section in your system prompt listing loaded skills. Check if you can see it, and look for a line similar to:
+
+```
+<!-- Showing x of y skills due to token limits -->
+```
+
+If this line appears, skills are being dropped from your context window due to token limits.
+
+Compare these two sources to find dropped items:
+
+1. **`<local-command-stdout>`** — Skills configured (from step 3's `/context` output)
+2. **`<available_skills>`** — Skills actually loaded in your system prompt
+
+Items that appear in #1 but NOT in #2 were dropped due to token limits.
+
+Write the dropped items to:
+
+`./skill-audit-YYYY-MM-DD-{audit-token}-dropped.json`
+
+Use the same JSON format as other audit files.
+
+If no truncation message appears, skip this step.
+
+### 9. Summarize findings
 
 Based on the results, provide actionable advice.
 
 **Use the compare output sections:**
 
-The `all/compare` output has THREE sections:
-1. `=== INVALID ===` — Items that are NOT loadable (standalone .md files). These are NOT token limit issues.
-2. `=== DROPPED ===` — Valid items hidden due to token limits.
-3. `=== EXTERNAL ===` — MCP tools (expected, ignore).
+The `compare/summary` output has FOUR sections:
+1. `=== KNOWN INVALID ===` — Items that are NOT loadable (standalone .md files). These are NOT token limit issues.
+2. `=== DISABLED ===` — MCP servers intentionally turned off. Not a token limit issue.
+3. `=== UNKNOWN INVALID ===` — On disk but not in context (reason unknown - may be token limits or other issue).
+4. `=== MCP LOADED TOOLS ===` — MCP tools loaded from servers (expected, ignore).
 
-**CRITICAL:** Items in the INVALID section must NEVER be reported as "hidden due to token limits". They are simply not loadable. Report them as:
+**CRITICAL:** Items in the KNOWN INVALID section must NEVER be reported as "hidden due to token limits". They are simply not loadable. Report them as:
 - "Invalid (not loadable): skill-name — use directory with SKILL.md instead"
 - Provide fix: `mkdir ~/.claude/skills/skill-name && mv ~/.claude/skills/skill-name.md ~/.claude/skills/skill-name/SKILL.md`
 
-**Only items in the DROPPED section** are token limit issues.
+**Note:** Items in UNKNOWN INVALID may or may not be token limit issues. Step 8 uses `<available_skills>` to identify items specifically dropped due to token limits.
 
 **Note:** `description/budget-summary` and `description/plugin-breakdown` measure the **description budget** (15k chars). This is separate from token limits that cause "hidden due to token limits". You can be under the description budget and still have skills hidden due to total content tokens.
 
@@ -177,12 +210,12 @@ The `all/compare` output has THREE sections:
 
 **Token limit recommendations (from /context JSON):**
 
-**If valid skills are dropped (not invalid) and description budget has headroom:**
+**If skills appear in step 8's dropped list and description budget has headroom:**
 - The issue is token limits, not description chars
 - **IMPORTANT:** `SLASH_COMMAND_TOOL_CHAR_BUDGET` does NOT help here - it only affects description budget
-- Do NOT report invalid items as "token limit issues" - they are simply not loadable
+- Do NOT report KNOWN INVALID items as "token limit issues" - they are simply not loadable
 - There is no env var to increase token limits - the only fix is to remove items
-- Step 4's `all/compare` output shows what was dropped
+- Step 8's dropped.json shows what was dropped due to token limits
 - If a plugin skill is >3k tokens, suggest trimming or uninstalling
 - If an MCP server adds >10k tokens, note the cost
 - Identify quick wins (large items that could be removed)

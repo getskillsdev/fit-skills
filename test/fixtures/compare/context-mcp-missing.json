@@ -1,0 +1,5 @@
+[
+  {"name": "valid-skill", "type": "skill", "source": "User"},
+  {"name": "mcp__playwright__navigate", "type": "MCP"},
+  {"name": "mcp__playwright__screenshot", "type": "MCP"}
+]

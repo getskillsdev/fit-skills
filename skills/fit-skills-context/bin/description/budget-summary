@@ -10,7 +10,7 @@ LIMIT="${SLASH_COMMAND_TOOL_CHAR_BUDGET:-15000}"
 
 # Find this skill's directory (script is in bin/description/)
 skill_dir="$(cd "$(dirname "$0")/../.." && pwd)"
-audit="$skill_dir/bin/audit-source"
+audit="$skill_dir/bin/description/audit-source"
 
 # Generate audits (store in memory via jq)
 global=$("$audit" global 2>/dev/null)
@@ -62,4 +62,4 @@ printf "%-30s %s\n" "Description budget remaining:" "${remaining} chars"
 echo ""
 echo "=== TOP DESCRIPTION BUDGET CONSUMERS ==="
 echo ""
-"$skill_dir/bin/top-desc-limit-consumers"
+"$skill_dir/bin/description/top-consumers"
