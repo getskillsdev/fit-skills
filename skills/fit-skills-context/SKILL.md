@@ -81,7 +81,7 @@ Ask the user:
 
 `<local-command-stdout>` is a tag in your context containing output from slash commands the user runs. Trust me - you will only be aware of the tag's existence once the user has run `/context` - otherwise you might think it's user-error. It exists! When the user enters OK or similar after running `/context`, look for this tag. If you cannot see it, the user has not run `/context` - ask them to run again.
 
-**Step 1: Convert to JSON and save**
+**Convert to JSON and save**
 
 Parse each skill/tool from `<local-command-stdout>` into structured format:
 ```json
@@ -96,26 +96,7 @@ Save using the same audit token:
 
 `./skill-audit-YYYY-MM-DD-{audit-token}-context.json`
 
-**Step 2: Extract metrics**
-
-Calculate and report:
-
-| Metric | Value |
-|--------|-------|
-| Total skills loaded | X (User + Project + Plugin) |
-| Total tokens (skills) | Xk |
-| MCP servers | N servers, X tools total, Xk tokens |
-| Biggest skill | name (Xk) |
-
-### 4. Find invalid items
-
-```bash
-{path-from-step-1}/bin/compare/on-disk-not-in-context ./skill-audit-YYYY-MM-DD-{audit-token}-disk.json ./skill-audit-YYYY-MM-DD-{audit-token}-context.json > ./skill-audit-YYYY-MM-DD-{audit-token}-invalid.json
-```
-
-Read the saved file. If it contains `[]`, all disk items are valid.
-
-### 5. Compare items on disk, but not in context
+### 4. Compare items on disk, but not in context
 
 Run the compare script with both saved files:
 ```bash
@@ -136,7 +117,7 @@ The script shows:
 - Run `claude --debug` to see connection attempts
 - Check that `.mcp.json` is in project root (not `.claude/.mcp.json`)
 
-### 6. Run budget summary
+### 5. Run budget summary
 
 Using the path from step 1, run the summary script:
 ```bash
@@ -145,7 +126,7 @@ Using the path from step 1, run the summary script:
 
 **Print the full output in your response** (don't just summarize).
 
-### 7. Run plugin breakdown
+### 6. Run plugin breakdown
 
 ```bash
 {path-from-step-1}/bin/description/plugin-breakdown
@@ -153,7 +134,7 @@ Using the path from step 1, run the summary script:
 
 **Print the full output in your response** (don't just summarize).
 
-### 8. Check for dropped skills (token limits)
+### 7. Check for dropped skills (token limits)
 
 `<available_skills>` is a section in your system prompt listing loaded skills. Check if you can see it, and look for a line similar to:
 
@@ -178,7 +159,7 @@ Use the same JSON format as other audit files.
 
 If no truncation message appears, skip this step.
 
-### 9. Summarize findings
+### 8. Summarize findings
 
 Based on the results, provide actionable advice.
 
@@ -194,7 +175,7 @@ The `compare/summary` output has FOUR sections:
 - "Invalid (not loadable): skill-name — use directory with SKILL.md instead"
 - Provide fix: `mkdir ~/.claude/skills/skill-name && mv ~/.claude/skills/skill-name.md ~/.claude/skills/skill-name/SKILL.md`
 
-**Note:** Items in UNKNOWN INVALID may or may not be token limit issues. Step 8 uses `<available_skills>` to identify items specifically dropped due to token limits.
+**Note:** Items in UNKNOWN INVALID may or may not be token limit issues. Step 7 uses `<available_skills>` to identify items specifically dropped due to token limits.
 
 **Note:** `description/budget-summary` and `description/plugin-breakdown` measure the **description budget** (15k chars). This is separate from token limits that cause "hidden due to token limits". You can be under the description budget and still have skills hidden due to total content tokens.
 
@@ -210,12 +191,12 @@ The `compare/summary` output has FOUR sections:
 
 **Token limit recommendations (from /context JSON):**
 
-**If skills appear in step 8's dropped list and description budget has headroom:**
+**If skills appear in step 7's dropped list and description budget has headroom:**
 - The issue is token limits, not description chars
 - **IMPORTANT:** `SLASH_COMMAND_TOOL_CHAR_BUDGET` does NOT help here - it only affects description budget
 - Do NOT report KNOWN INVALID items as "token limit issues" - they are simply not loadable
 - There is no env var to increase token limits - the only fix is to remove items
-- Step 8's dropped.json shows what was dropped due to token limits
+- Step 7's dropped.json shows what was dropped due to token limits
 - If a plugin skill is >3k tokens, suggest trimming or uninstalling
 - If an MCP server adds >10k tokens, note the cost
 - Identify quick wins (large items that could be removed)
