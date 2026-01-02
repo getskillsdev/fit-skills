@@ -84,3 +84,7 @@ Restart Claude after installing or updating plugins.
 ## License
 
 MIT - see [LICENSE.md](./LICENSE.md)
+
+## Disclaimer
+
+Not affiliated with, endorsed by, or sponsored by Anthropic.
