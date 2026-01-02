@@ -1,8 +1,8 @@
 #!/usr/bin/env bats
 
 setup() {
-  bin_dir="$(cd "$(dirname "$BATS_TEST_FILENAME")/../skills/fit-skills-context/bin" && pwd)"
-  fixtures_dir="$(cd "$(dirname "$BATS_TEST_FILENAME")/fixtures/compare" && pwd)"
+  bin_dir="$(cd "$(dirname "$BATS_TEST_FILENAME")/../../skills/fit-skills-context/bin" && pwd)"
+  fixtures_dir="$(cd "$(dirname "$BATS_TEST_FILENAME")/../fixtures/compare" && pwd)"
 }
 
 @test "compare/summary: requires two arguments" {
