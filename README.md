@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/getskillsdev/fit-skills/actions/workflows/ci.yml/badge.svg)](https://github.com/getskillsdev/fit-skills/actions/workflows/ci.yml)
 
+[![Watch the video](https://img.youtube.com/vi/bRLnq0mxynQ/maxresdefault.jpg)](https://youtu.be/bRLnq0mxynQ)
+
 Did your Claude stuff its context window with too many bloated skills?
 
 <img src="./logo.png" alt="fit-skills logo" width="200">
