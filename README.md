@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/getskillsdev/fit-skills/actions/workflows/ci.yml/badge.svg)](https://github.com/getskillsdev/fit-skills/actions/workflows/ci.yml)
 
-📺 [Watch: Anthropic's Plugin is Eating Your Claude's Budget](https://youtu.be/bRLnq0mxynQ)
+📺 <a href="https://youtu.be/bRLnq0mxynQ" target="_blank">Watch: Anthropic's Plugin is Eating Your Claude's Budget</a>
 
 Did your Claude stuff its context window with too many bloated skills?
 
